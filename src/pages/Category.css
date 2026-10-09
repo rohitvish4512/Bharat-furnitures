@@ -1,0 +1,77 @@
+.category-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.filters-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 100px;
+  background: var(--surface);
+  padding: 1.5rem;
+}
+
+.category-main {
+  flex: 1;
+}
+
+.filter-title {
+  font-size: 1rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.flex-col { flex-direction: column; }
+.p-4 { padding: 1rem; }
+.py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+.cursor-pointer { cursor: pointer; }
+.ml-auto { margin-left: auto; }
+.relative { position: relative; }
+.absolute { position: absolute; }
+.right-2 { right: 0.5rem; }
+.top-1\/2 { top: 50%; }
+.-translate-y-1\/2 { transform: translateY(-50%); }
+.pointer-events-none { pointer-events: none; }
+
+.sort-select {
+  appearance: none;
+  background: var(--background);
+  border: 1px solid var(--border);
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-main);
+}
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.toolbar {
+  background: var(--surface);
+}
+
+.mobile-filter-btn {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .category-layout {
+    flex-direction: column;
+  }
+  .filters-sidebar {
+    display: none; /* In a real app, this would toggle open as a modal/drawer */
+  }
+  .category-main {
+    width: 100%;
+  }
+  .mobile-filter-btn {
+    display: flex;
+  }
+}
