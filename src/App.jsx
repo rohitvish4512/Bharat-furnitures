@@ -3,18 +3,18 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Category from './pages/Category';
+import ProductDetails from './pages/ProductDetails';
 import Admin from './pages/Admin';
-import './App.css'; // Vite generates an App.css, we'll just keep it or remove its content if it interferes
-
 function App() {
   return (
     <Router>
-      <div className="app-container">
+      <div className="flex flex-col min-h-screen bg-background text-text-main font-body">
         <Navbar />
-        <main className="main-content">
+        <main className="flex-1">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/category/:id" element={<Category />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>

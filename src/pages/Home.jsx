@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, limit } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Search } from 'lucide-react';
-import './Home.css';
+import Sidebar from '../components/Sidebar';
 
 export default function Home() {
   const [categories, setCategories] = useState([]);
@@ -27,19 +26,22 @@ export default function Home() {
   }, []);
 
   if (loading) {
-    return <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading products from Firebase...</div>;
-  }
-
-  if (errorMsg) {
     return (
-      <div style={{ minHeight: '85vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'red' }}>
-        <h2>Database Connection Error</h2>
-        <p>{errorMsg}</p>
+      <div className="min-h-[85vh] flex items-center justify-center text-text-muted font-medium">
+        Loading products from Firebase...
       </div>
     );
   }
 
-  // Use fallback images for categories based on name
+  if (errorMsg) {
+    return (
+      <div className="min-h-[85vh] flex flex-col items-center justify-center text-red-600 gap-2">
+        <h2 className="text-xl font-bold">Database Connection Error</h2>
+        <p className="text-sm">{errorMsg}</p>
+      </div>
+    );
+  }
+
   const getFallbackImage = (name) => {
     const images = {
       'beds': 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=500&q=80',
@@ -53,55 +55,46 @@ export default function Home() {
   };
 
   return (
-    <div className="home-page-ref animate-fade-in">
+    <div className="flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-background">
       {/* Sidebar Navigation */}
-      <aside className="home-sidebar-nav">
-        <div className="search-bar">
-          <input type="text" placeholder="SEARCH" />
-          <Search size={18} color="var(--text-muted)" />
-        </div>
-        
-        <div className="sidebar-links">
-          <Link to="#">ORDER STATUS</Link>
-          <Link to="#">ACCOUNT</Link>
-          <Link to="#" className="new-launch">NEW LAUNCHES 🎉</Link>
-        </div>
-
-        <div className="sidebar-categories">
-          <Link to="/category/all" className="font-bold text-main">ALL CATEGORIES</Link>
-          {categories.map(cat => (
-            <Link to={`/category/${cat.id}`} key={cat.id}>
-              {cat.name.toUpperCase()}
-            </Link>
-          ))}
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main Content Area */}
-      <main className="home-main-board">
-        <div className="board-header">
-          <h2 className="board-title">BEDROOM FURNITURE</h2>
-          <p className="board-subtitle">Academic Year Sale upto 60% OFF • Space Saving Wood • Lifetime warranty</p>
+      <main className="flex-1 p-6 md:p-12 bg-white">
+        <div className="text-center mb-10">
+          <h2 className="font-heading text-2xl md:text-3xl font-bold text-[#4a2a18] tracking-wider mb-2">
+            BEDROOM FURNITURE
+          </h2>
+          <p className="text-sm text-text-muted">
+            Academic Year Sale upto 60% OFF • Space Saving Wood • Lifetime warranty
+          </p>
         </div>
 
-        <div className="board-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-16">
           {categories.map(cat => (
-            <div key={cat.id} className="board-card">
-              <div className="card-image-wrap">
-                <img src={getFallbackImage(cat.name)} alt={cat.name} />
+            <div key={cat.id} className="flex flex-col items-center text-center group">
+              <div className="w-full aspect-square overflow-hidden mb-3 rounded-xl bg-surface-alt">
+                <img 
+                  src={getFallbackImage(cat.name)} 
+                  alt={cat.name} 
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
               </div>
-              <p className="card-discount">Upto 60% OFF</p>
-              <h4 className="card-title">{cat.name.toUpperCase()}</h4>
-              <Link to={`/category/${cat.id}`} className="shop-btn">
+              <p className="text-[#c2410c] text-xs font-semibold mb-1">Upto 60% OFF</p>
+              <h4 className="font-heading text-sm font-bold text-text-main mb-3">{cat.name.toUpperCase()}</h4>
+              <Link 
+                to={`/category/${cat.id}`} 
+                className="inline-flex items-center gap-1 bg-[#1e1b4b] hover:bg-[#2e2a72] text-white text-xs font-medium px-5 py-2 rounded-full transition-all duration-200 hover:shadow-md"
+              >
                 Shop &rarr;
               </Link>
             </div>
           ))}
         </div>
 
-        <div className="board-footer mt-8">
-          <p className="subtitle">Introducing</p>
-          <h2 className="footer-title">SMART COLLECTION</h2>
+        <div className="text-center mt-8 py-8 border-t border-border">
+          <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Introducing</p>
+          <h2 className="font-heading text-2xl font-extrabold text-primary tracking-wide">SMART COLLECTION</h2>
         </div>
       </main>
     </div>

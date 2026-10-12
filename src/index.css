@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Wooden + Student Theme Palette */
   --primary: #8B5E34; /* Medium Wood */
@@ -89,24 +93,7 @@ button {
 .gap-md { gap: 1rem; }
 .gap-lg { gap: 2rem; }
 
-/* Grid */
-.grid { display: grid; }
-.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
-
-@media (max-width: 1024px) {
-  .grid-cols-4 { grid-template-columns: repeat(3, 1fr); }
-  .h1-display { font-size: 2.75rem; }
-}
-@media (max-width: 768px) {
-  .grid-cols-4, .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
-  .h1-display { font-size: 2.25rem; }
-  .h2-title { font-size: 2rem; }
-}
-@media (max-width: 480px) {
-  .grid-cols-4, .grid-cols-3, .grid-cols-2 { grid-template-columns: 1fr; }
-}
+/* Grid utilities handled by Tailwind */
 
 /* Buttons */
 .btn {

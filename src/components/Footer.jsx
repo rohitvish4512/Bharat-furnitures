@@ -1,32 +1,34 @@
 export default function Footer() {
   return (
-    <footer style={{ background: 'var(--text-main)', color: 'white', padding: '4rem 0', marginTop: '4rem' }}>
-      <div className="container grid grid-cols-4 gap-lg">
+    <footer className="bg-text-main text-white py-16 mt-16">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <div>
-          <h2 className="h3-subtitle text-gradient mb-4">BharatFurnitures</h2>
-          <p className="text-small" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <h2 className="font-heading font-bold text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
+            BharatFurnitures
+          </h2>
+          <p className="text-sm text-white/70 leading-relaxed">
             Smart furniture for smart spaces. Space-saving furniture designed for students, hostels and compact rooms.
           </p>
         </div>
         <div>
-          <h4 style={{ marginBottom: '1rem' }}>Shop</h4>
-          <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>
-            <li>Study Tables</li>
-            <li>Storage</li>
-            <li>Multipurpose</li>
+          <h4 className="font-heading font-semibold text-lg text-white mb-4">Shop</h4>
+          <ul className="flex flex-col gap-2 text-sm text-white/80">
+            <li className="hover:text-primary transition-colors cursor-pointer">Study Tables</li>
+            <li className="hover:text-primary transition-colors cursor-pointer">Storage</li>
+            <li className="hover:text-primary transition-colors cursor-pointer">Multipurpose</li>
           </ul>
         </div>
         <div>
-          <h4 style={{ marginBottom: '1rem' }}>Help</h4>
-          <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>
-            <li>Track Order</li>
-            <li>Returns</li>
-            <li>FAQ</li>
+          <h4 className="font-heading font-semibold text-lg text-white mb-4">Help</h4>
+          <ul className="flex flex-col gap-2 text-sm text-white/80">
+            <li className="hover:text-primary transition-colors cursor-pointer">Track Order</li>
+            <li className="hover:text-primary transition-colors cursor-pointer">Returns</li>
+            <li className="hover:text-primary transition-colors cursor-pointer">FAQ</li>
           </ul>
         </div>
         <div>
-          <h4 style={{ marginBottom: '1rem' }}>Connect</h4>
-          <p className="text-small" style={{ color: 'rgba(255,255,255,0.7)' }}>Follow us on Instagram for dorm room inspiration!</p>
+          <h4 className="font-heading font-semibold text-lg text-white mb-4">Connect</h4>
+          <p className="text-sm text-white/70 leading-relaxed">Follow us on Instagram for dorm room inspiration!</p>
         </div>
       </div>
     </footer>

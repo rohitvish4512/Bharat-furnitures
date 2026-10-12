@@ -1,10 +1,10 @@
 import { useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProductCard from '../components/ProductCard';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Filter, SlidersHorizontal, ChevronDown } from 'lucide-react';
-import './Category.css';
+import { ChevronDown, Sliders, RotateCcw } from 'lucide-react';
+import Sidebar from '../components/Sidebar';
 
 export default function Category() {
   const { id } = useParams();
@@ -12,6 +12,22 @@ export default function Category() {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState({ name: 'Loading...', id: 'all' });
   const [loading, setLoading] = useState(true);
+
+  // Price range volume slider state
+  const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
+  const [priceLimit, setPriceLimit] = useState(null);
+  const priceDropdownRef = useRef(null);
+
+  // Close price popover when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (priceDropdownRef.current && !priceDropdownRef.current.contains(event.target)) {
+        setIsPriceDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,10 +52,11 @@ export default function Category() {
         } else {
           prodQuery = collection(db, 'products');
         }
-        
+
         const prodSnap = await getDocs(prodQuery);
         const prodData = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setProducts(prodData);
+        setPriceLimit(null); // Reset filter when category changes
       } catch (error) {
         console.error("Error fetching category data:", error);
       } finally {
@@ -49,102 +66,138 @@ export default function Category() {
     fetchData();
   }, [id]);
 
-  let filteredProducts = [...products];
+  const maxProductPrice = products.length > 0
+    ? Math.max(...products.map(p => Number(p.price) || 0), 2000)
+    : 10000;
+
+  const currentMax = priceLimit !== null ? priceLimit : maxProductPrice;
+
+  // Filter products by price
+  let filteredProducts = products.filter(p => {
+    if (priceLimit !== null) {
+      return (Number(p.price) || 0) <= priceLimit;
+    }
+    return true;
+  });
 
   // Simulate sorting
   if (sortBy === 'price-low') filteredProducts.sort((a, b) => a.price - b.price);
   if (sortBy === 'price-high') filteredProducts.sort((a, b) => b.price - a.price);
   if (sortBy === 'rating') filteredProducts.sort((a, b) => b.rating - a.rating);
 
-  if (loading) {
-    return <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading products...</div>;
-  }
-
   return (
-    <div className="category-page container animate-fade-in section">
-      <div className="category-header mb-8">
-        <h1 className="h2-title text-gradient">{category.name}</h1>
-        <p className="text-muted">Showing {filteredProducts.length} smart solutions for your space.</p>
-      </div>
+    <div className="flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-background">
+      <Sidebar />
 
-      <div className="category-layout">
-        {/* Sidebar Filters */}
-        <aside className="filters-sidebar rounded-card p-4">
-          <div className="flex items-center gap-sm mb-6">
-            <Filter size={20} />
-            <h3 className="font-bold">Filters</h3>
+      <main className="flex-1 p-6 md:p-12 overflow-y-auto">
+        {loading ? (
+          <div className="min-h-[60vh] flex items-center justify-center text-text-muted font-medium">
+            Loading products...
           </div>
-          
-          <div className="filter-group">
-            <h4 className="filter-title">Price Range</h4>
-            <div className="flex flex-col gap-sm mt-2">
-              <label className="flex items-center gap-sm cursor-pointer">
-                <input type="checkbox" /> Under ₹1000
-              </label>
-              <label className="flex items-center gap-sm cursor-pointer">
-                <input type="checkbox" /> ₹1000 - ₹2500
-              </label>
-              <label className="flex items-center gap-sm cursor-pointer">
-                <input type="checkbox" /> Above ₹2500
-              </label>
+        ) : (
+          <>
+            <div className="mb-7">
+              <h1 className="font-heading font-extrabold text-2xl md:text-3xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-1">
+                {category.name}
+              </h1>
+              <p className="text-sm text-text-muted">Showing smart solutions for your space.</p>
             </div>
-          </div>
 
-          <div className="filter-group mt-6">
-            <h4 className="filter-title">Features</h4>
-            <div className="flex flex-col gap-sm mt-2">
-              <label className="flex items-center gap-sm cursor-pointer">
-                <input type="checkbox" /> Foldable
-              </label>
-              <label className="flex items-center gap-sm cursor-pointer">
-                <input type="checkbox" /> With Storage
-              </label>
-              <label className="flex items-center gap-sm cursor-pointer">
-                <input type="checkbox" /> Wall Mounted
-              </label>
-            </div>
-          </div>
-        </aside>
+            {/* Toolbar with Price Range volume slider dropdown & Sort By */}
+            <div className="relative z-50 flex flex-wrap justify-between items-center mb-8 bg-surface border border-border rounded-2xl p-4 shadow-sm gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative z-50" ref={priceDropdownRef}>
+                  <button
+                    type="button"
+                    className={`flex items-center gap-1.5 bg-background border border-border hover:border-primary px-3.5 py-1.5 rounded-lg font-body text-xs font-medium text-text-main transition-all ${
+                      priceLimit !== null ? 'border-primary bg-primary/10 text-primary font-semibold' : ''
+                    }`}
+                    onClick={() => setIsPriceDropdownOpen(!isPriceDropdownOpen)}
+                  >
+                    <Sliders size={14} />
+                    <span>Price: {priceLimit !== null ? `Up to ₹${priceLimit.toLocaleString('en-IN')}` : 'All Prices'}</span>
+                    <ChevronDown size={14} className={`transition-transform duration-200 text-text-muted ${isPriceDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
 
-        {/* Main Content */}
-        <div className="category-main">
-          <div className="toolbar flex justify-between items-center mb-6 rounded-card p-4">
-            <button className="btn btn-outline mobile-filter-btn flex items-center gap-sm">
-              <SlidersHorizontal size={16} /> Filters
-            </button>
-            
-            <div className="sort-dropdown flex items-center gap-sm ml-auto">
-              <span className="text-small font-bold text-main">Sort by:</span>
-              <div className="select-wrapper relative">
-                <select 
-                  value={sortBy} 
-                  onChange={e => setSortBy(e.target.value)}
-                  className="sort-select"
-                >
-                  <option value="popular">Popularity</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="rating">Top Rated</option>
-                </select>
-                <ChevronDown size={16} className="select-icon absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted" />
+                  {isPriceDropdownOpen && (
+                    <div className="absolute top-[calc(100%+8px)] left-0 w-[230px] bg-surface border border-border rounded-xl shadow-xl p-3.5 z-[999]">
+                      <div className="flex justify-between items-center mb-2.5">
+                        <span className="text-[0.72rem] font-bold uppercase tracking-wider text-text-muted">Price Range</span>
+                        {priceLimit !== null && (
+                          <button
+                            type="button"
+                            className="flex items-center gap-1 text-[0.75rem] text-rose-600 hover:underline font-semibold"
+                            onClick={() => setPriceLimit(null)}
+                          >
+                            <RotateCcw size={11} /> Reset
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="text-lg font-bold text-primary tracking-tight">
+                          ₹{currentMax.toLocaleString('en-IN')}
+                        </div>
+
+                        <input
+                          type="range"
+                          min="500"
+                          max={maxProductPrice}
+                          step="100"
+                          value={currentMax}
+                          onChange={(e) => setPriceLimit(Number(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+
+                        <div className="flex justify-between text-[0.7rem] font-semibold text-text-muted">
+                          <span>₹500</span>
+                          <span>₹{maxProductPrice.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-xs font-bold text-text-main">Sort by:</span>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value)}
+                    className="appearance-none bg-background border border-border hover:border-primary focus:border-primary focus:outline-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-medium text-text-main cursor-pointer"
+                  >
+                    <option value="popular">Popularity</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="rating">Top Rated</option>
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted" />
+                </div>
               </div>
             </div>
-          </div>
 
-          {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-3 gap-md">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state text-center py-12">
-              <div className="text-muted mb-4">No products found in this category.</div>
-              <button className="btn btn-primary">Clear Filters</button>
-            </div>
-          )}
-        </div>
-      </div>
+            {/* Products Grid */}
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+                {filteredProducts.map(product => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-surface rounded-2xl border border-border p-8">
+                <div className="text-text-muted mb-4 text-sm">No products found in this price range.</div>
+                <button 
+                  className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-full text-sm font-semibold transition-all shadow-md" 
+                  onClick={() => setPriceLimit(null)}
+                >
+                  Clear Price Filter
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 }

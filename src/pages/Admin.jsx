@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
 import { collection, addDoc, updateDoc, doc, getDocs, deleteDoc } from 'firebase/firestore';
-import './Admin.css';
 
 const generateSignature = async (timestamp, apiSecret) => {
   const str = `timestamp=${timestamp}${apiSecret}`;
@@ -207,112 +206,130 @@ const Admin = () => {
   }, {});
 
   return (
-    <div className="admin-page">
-      <div className="admin-tabs">
+    <div className="p-6 md:p-10 max-w-4xl mx-auto">
+      <div className="flex justify-center gap-3 mb-8">
         <button 
-          className={`admin-tab ${activeTab === 'add' ? 'active' : ''}`}
+          className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 ${
+            activeTab === 'add' 
+              ? 'bg-primary text-white shadow-md' 
+              : 'bg-slate-200 text-text-muted hover:bg-slate-300'
+          }`}
           onClick={() => { setActiveTab('add'); setEditingId(null); setFormData(initialState); }}
         >
           {editingId ? 'Edit Product' : 'Add New Product'}
         </button>
         <button 
-          className={`admin-tab ${activeTab === 'manage' ? 'active' : ''}`}
+          className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 ${
+            activeTab === 'manage' 
+              ? 'bg-primary text-white shadow-md' 
+              : 'bg-slate-200 text-text-muted hover:bg-slate-300'
+          }`}
           onClick={() => setActiveTab('manage')}
         >
           Manage Products
         </button>
       </div>
 
-      <div className="admin-container">
-        <h2>{activeTab === 'manage' ? 'Manage Products' : (editingId ? 'Edit Product' : 'Add Product')}</h2>
+      <div className="bg-surface rounded-2xl p-6 md:p-8 shadow-sm border border-border">
+        <h2 className="text-2xl font-heading font-bold text-center text-text-main mb-6">
+          {activeTab === 'manage' ? 'Manage Products' : (editingId ? 'Edit Product' : 'Add Product')}
+        </h2>
         
-        {message && <div className={`message ${message.includes('success') ? 'success' : 'error'}`}>{message}</div>}
+        {message && (
+          <div className={`p-3 mb-6 rounded-lg text-center text-sm font-medium border ${
+            message.includes('success') 
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+              : 'bg-rose-100 text-rose-800 border-rose-200'
+          }`}>
+            {message}
+          </div>
+        )}
         
         {activeTab === 'add' && (
-          <form onSubmit={handleSubmit} className="admin-form">
-            <div className="form-group">
-              <label>Product Name</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Product Name</label>
+              <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
             
-            <div className="form-group">
-              <label>Category ID (e.g., storage-racks, beds)</label>
-              <input type="text" name="categoryId" value={formData.categoryId} onChange={handleChange} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Category ID (e.g., storage-racks, beds)</label>
+              <input type="text" name="categoryId" value={formData.categoryId} onChange={handleChange} required className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
             
-            <div className="form-group">
-              <label>Price (₹)</label>
-              <input type="number" name="price" value={formData.price} onChange={handleChange} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Price (₹)</label>
+              <input type="number" name="price" value={formData.price} onChange={handleChange} required className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Original Price (₹)</label>
-              <input type="number" name="originalPrice" value={formData.originalPrice} onChange={handleChange} />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Original Price (₹)</label>
+              <input type="number" name="originalPrice" value={formData.originalPrice} onChange={handleChange} className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
             
-            <div className="form-group">
-              <label>Description</label>
-              <textarea name="description" value={formData.description} onChange={handleChange} required rows="4"></textarea>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Description</label>
+              <textarea name="description" value={formData.description} onChange={handleChange} required rows="4" className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors"></textarea>
             </div>
 
-            <div className="form-group">
-              <label>Dimensions</label>
-              <input type="text" name="dimensions" value={formData.dimensions} onChange={handleChange} placeholder="e.g., 80x40x15 cm" />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Dimensions</label>
+              <input type="text" name="dimensions" value={formData.dimensions} onChange={handleChange} placeholder="e.g., 80x40x15 cm" className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Material</label>
-              <input type="text" name="material" value={formData.material} onChange={handleChange} placeholder="e.g., Plastic, Wood" />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Material</label>
+              <input type="text" name="material" value={formData.material} onChange={handleChange} placeholder="e.g., Plastic, Wood" className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Weight</label>
-              <input type="text" name="weight" value={formData.weight} onChange={handleChange} placeholder="e.g., 3 kg" />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Weight</label>
+              <input type="text" name="weight" value={formData.weight} onChange={handleChange} placeholder="e.g., 3 kg" className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Stock</label>
-              <input type="number" name="stock" value={formData.stock} onChange={handleChange} placeholder="e.g., 120" />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Stock</label>
+              <input type="number" name="stock" value={formData.stock} onChange={handleChange} placeholder="e.g., 120" className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Badges (comma separated)</label>
-              <input type="text" name="badges" value={formData.badges} onChange={handleChange} placeholder="e.g., Smart Storage, New" />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Badges (comma separated)</label>
+              <input type="text" name="badges" value={formData.badges} onChange={handleChange} placeholder="e.g., Smart Storage, New" className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Features (comma separated)</label>
-              <input type="text" name="features" value={formData.features} onChange={handleChange} placeholder="e.g., Wheels, Slim Design" />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Features (comma separated)</label>
+              <input type="text" name="features" value={formData.features} onChange={handleChange} placeholder="e.g., Wheels, Slim Design" className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Rating</label>
-              <input type="number" name="rating" step="0.1" max="5" value={formData.rating} onChange={handleChange} />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Rating</label>
+              <input type="number" name="rating" step="0.1" max="5" value={formData.rating} onChange={handleChange} className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Reviews Count</label>
-              <input type="number" name="reviews" value={formData.reviews} onChange={handleChange} />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Reviews Count</label>
+              <input type="number" name="reviews" value={formData.reviews} onChange={handleChange} className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm text-text-main focus:outline-none focus:border-primary transition-colors" />
             </div>
 
-            <div className="form-group">
-              <label>Product Image {editingId && '(Leave empty to keep current image)'}</label>
-              <input type="file" onChange={handleImageChange} accept="image/*" required={!editingId} />
+            <div className="flex flex-col gap-1.5">
+              <label className="font-semibold text-xs text-text-main">Product Image {editingId && '(Leave empty to keep current image)'}</label>
+              <input type="file" onChange={handleImageChange} accept="image/*" required={!editingId} className="w-full py-2 text-sm text-text-muted" />
               {editingId && formData.images && (
-                <div style={{marginTop: '10px'}}>
-                  <img src={formData.images[0]} alt="Current" width="80" />
+                <div className="mt-2">
+                  <img src={formData.images[0]} alt="Current" className="w-20 h-20 object-cover rounded-lg border border-border" />
                 </div>
               )}
             </div>
 
-            <button type="submit" className="submit-btn" disabled={loading}>
+            <button type="submit" className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-base shadow-md transition-all disabled:opacity-50 mt-2" disabled={loading}>
               {loading ? 'Saving...' : (editingId ? 'Update Product' : 'Add Product')}
             </button>
             
             {editingId && (
               <button 
                 type="button" 
-                className="cancel-btn" 
+                className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-base shadow-md transition-all mt-2" 
                 onClick={() => {
                   setEditingId(null);
                   setFormData(initialState);
@@ -327,27 +344,30 @@ const Admin = () => {
         )}
 
         {activeTab === 'manage' && (
-          <div className="manage-products">
-            {loading ? <p>Loading products...</p> : (
-              Object.keys(productsByCategory).length === 0 ? <p>No products found.</p> :
+          <div className="flex flex-col gap-6">
+            {loading ? <p className="text-center text-text-muted py-8">Loading products...</p> : (
+              Object.keys(productsByCategory).length === 0 ? <p className="text-center text-text-muted py-8">No products found.</p> :
               Object.keys(productsByCategory).map(catId => {
                 const catInfo = categories.find(c => c.id === catId);
                 const catName = catInfo ? catInfo.name : catId;
                 
                 return (
-                  <div key={catId} className="category-group">
-                    <h3 className="category-header">{catName} <span className="cat-badge">{catId}</span></h3>
-                    <div className="product-list">
+                  <div key={catId} className="bg-background rounded-xl p-4 border border-border">
+                    <h3 className="text-base font-bold font-heading text-text-main pb-2 mb-3 border-b border-border flex items-center justify-between">
+                      <span>{catName}</span>
+                      <span className="text-[0.7rem] bg-white border border-border px-2.5 py-0.5 rounded-full text-text-muted font-normal">{catId}</span>
+                    </h3>
+                    <div className="flex flex-col gap-3">
                       {productsByCategory[catId].map(prod => (
-                        <div key={prod.id} className="admin-product-card">
-                          <img src={prod.images?.[0] || 'https://via.placeholder.com/80'} alt={prod.name} />
-                          <div className="prod-details">
-                            <h4>{prod.name}</h4>
-                            <p>₹{prod.price} | Stock: {prod.stock}</p>
+                        <div key={prod.id} className="flex items-center gap-4 p-3 bg-white border border-border rounded-xl shadow-xs">
+                          <img src={prod.images?.[0] || 'https://via.placeholder.com/80'} alt={prod.name} className="w-14 h-14 object-cover rounded-lg shrink-0 border border-border" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm text-text-main truncate mb-0.5">{prod.name}</h4>
+                            <p className="text-xs text-text-muted">₹{prod.price} | Stock: {prod.stock}</p>
                           </div>
-                          <div className="prod-actions">
-                            <button className="edit-btn" onClick={() => handleEdit(prod)}>Edit</button>
-                            <button className="delete-btn" onClick={() => handleDelete(prod.id)}>Delete</button>
+                          <div className="flex gap-2 shrink-0">
+                            <button className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all" onClick={() => handleEdit(prod)}>Edit</button>
+                            <button className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all" onClick={() => handleDelete(prod.id)}>Delete</button>
                           </div>
                         </div>
                       ))}
