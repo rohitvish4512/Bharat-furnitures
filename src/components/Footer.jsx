@@ -1,35 +1,103 @@
+import { Link } from 'react-router-dom';
+import { MessageCircle, Package, ArrowUpRight } from 'lucide-react';
+
 export default function Footer() {
+  // WhatsApp Support Number & default message (Aap ise change kar sakte hain)
+  const whatsappNumber = "919302530042"; // Replace with your official business WhatsApp number
+  const whatsappMessage = encodeURIComponent("Hello Bharat Furnitures! I need assistance with furniture products / order inquiry.");
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+
   return (
-    <footer className="bg-text-main text-white py-16 mt-16">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <footer className="bg-[#1C1917] text-white py-14 mt-16 border-t border-stone-800">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        
+        {/* 1. Brand Description */}
         <div>
-          <h2 className="font-heading font-bold text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
-            BharatFurnitures
+          <h2 className="font-heading font-extrabold text-2xl bg-gradient-to-r from-[#D4A373] via-[#E9EDC9] to-amber-200 bg-clip-text text-transparent mb-3">
+            Bharat Furnitures
           </h2>
-          <p className="text-sm text-white/70 leading-relaxed">
-            Smart furniture for smart spaces. Space-saving furniture designed for students, hostels and compact rooms.
+          <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
+            Smart, durable, and space-saving furniture designed for modern homes, compact rooms, and everyday comfort.
           </p>
         </div>
+
+        {/* 2. Shop by Category (3 Key Categories) */}
         <div>
-          <h4 className="font-heading font-semibold text-lg text-white mb-4">Shop</h4>
-          <ul className="flex flex-col gap-2 text-sm text-white/80">
-            <li className="hover:text-primary transition-colors cursor-pointer">Study Tables</li>
-            <li className="hover:text-primary transition-colors cursor-pointer">Storage</li>
-            <li className="hover:text-primary transition-colors cursor-pointer">Multipurpose</li>
+          <h4 className="font-heading font-bold text-base text-stone-100 mb-4 tracking-wide uppercase text-xs">
+            Shop Categories
+          </h4>
+          <ul className="flex flex-col gap-2.5 text-xs sm:text-sm text-stone-400">
+            <li>
+              <Link 
+                to="/category/study-laptop-tables" 
+                className="hover:text-[#D4A373] hover:translate-x-1 inline-flex items-center gap-1 transition-all"
+              >
+                <span>Study & Laptop Tables</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/category/storage-racks" 
+                className="hover:text-[#D4A373] hover:translate-x-1 inline-flex items-center gap-1 transition-all"
+              >
+                <span>Storage Racks</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/category/chairs" 
+                className="hover:text-[#D4A373] hover:translate-x-1 inline-flex items-center gap-1 transition-all"
+              >
+                <span>Study & Utility Chairs</span>
+              </Link>
+            </li>
           </ul>
         </div>
+
+        {/* 3. Help & Order Tracking */}
         <div>
-          <h4 className="font-heading font-semibold text-lg text-white mb-4">Help</h4>
-          <ul className="flex flex-col gap-2 text-sm text-white/80">
-            <li className="hover:text-primary transition-colors cursor-pointer">Track Order</li>
-            <li className="hover:text-primary transition-colors cursor-pointer">Returns</li>
-            <li className="hover:text-primary transition-colors cursor-pointer">FAQ</li>
+          <h4 className="font-heading font-bold text-base text-stone-100 mb-4 tracking-wide uppercase text-xs">
+            Help & Support
+          </h4>
+          <ul className="flex flex-col gap-2.5 text-xs sm:text-sm text-stone-400">
+            <li>
+              <Link 
+                to="/orders" 
+                className="hover:text-[#D4A373] hover:translate-x-1 inline-flex items-center gap-1.5 transition-all font-medium text-stone-300"
+              >
+                <Package size={15} className="text-[#D4A373]" />
+                <span>Track Order</span>
+              </Link>
+            </li>
           </ul>
         </div>
+
+        {/* 4. Connect with WhatsApp Integration */}
         <div>
-          <h4 className="font-heading font-semibold text-lg text-white mb-4">Connect</h4>
-          <p className="text-sm text-white/70 leading-relaxed">Follow us on Instagram for dorm room inspiration!</p>
+          <h4 className="font-heading font-bold text-base text-stone-100 mb-4 tracking-wide uppercase text-xs">
+            Connect With Us
+          </h4>
+          <p className="text-xs text-stone-400 mb-4 leading-relaxed">
+            Have questions about furniture dimensions, bulk inquiry, or order updates? Chat with us instantly on WhatsApp!
+          </p>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md active:scale-95 transition-all group"
+          >
+            <MessageCircle size={17} className="fill-white/20 group-hover:scale-110 transition-transform" />
+            <span>Chat on WhatsApp</span>
+            <ArrowUpRight size={13} className="text-emerald-200" />
+          </a>
         </div>
+
+      </div>
+
+      {/* Bottom Copyright */}
+      <div className="max-w-7xl mx-auto px-6 mt-12 pt-6 border-t border-stone-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-[0.7rem] text-stone-500">
+        <p>© {new Date().getFullYear()} Bharat Furnitures. All rights reserved.</p>
+        <p>Handcrafted Quality Furniture for Indian Homes</p>
       </div>
     </footer>
   );

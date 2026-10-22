@@ -8,22 +8,29 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#8B5E34',
-          hover: '#5C3A21',
+          DEFAULT: '#8B5E34', // Rich Teak/Sheesham Wood
+          hover: '#6E4522',   // Deep Walnut Wood
         },
         secondary: {
-          DEFAULT: '#C89B6D',
-          hover: '#A67B51',
+          DEFAULT: '#C89B6D', // Warm Oak / Honey Wood
+          hover: '#A87A4F',
         },
-        accent: '#5F7D4A',
-        background: '#FFF8ED',
+        wood: {
+          light: '#F5EDE4',
+          sand: '#EADBCE',
+          teak: '#8B5E34',
+          walnut: '#5C3A21',
+          dark: '#3D2514',
+        },
+        accent: '#5F7D4A',     // Organic Sage Green (complements warm timber)
+        background: '#FAF6F0', // Warm Alabaster/Cream background
         surface: {
           DEFAULT: '#FFFFFF',
-          alt: '#F3E5D0',
+          alt: '#F4ECE1',      // Soft birch/cream surface
         },
-        'text-main': '#2B2118',
-        'text-muted': '#6B5542',
-        border: '#E2E8F0',
+        'text-main': '#2C2016', // Deep espresso brown text
+        'text-muted': '#7A6453',// Warm cedar muted text
+        border: '#E8DED1',     // Soft warm wood-tone border (no harsh cold gray)
       },
       fontFamily: {
         heading: ['Outfit', 'sans-serif'],

@@ -5,20 +5,20 @@
 @tailwind utilities;
 
 :root {
-  /* Wooden + Student Theme Palette */
-  --primary: #8B5E34; /* Medium Wood */
-  --primary-hover: #5C3A21; /* Dark Wood */
-  --secondary: #C89B6D; /* Light Wood */
-  --secondary-hover: #A67B51;
-  --accent: #5F7D4A; /* Green Accent */
-  --background: #FFF8ED; /* Cream */
+  /* Wooden + Student-Focused Theme Palette */
+  --primary: #8B5E34; /* Rich Teak / Sheesham Wood */
+  --primary-hover: #6E4522; /* Deep Walnut */
+  --secondary: #C89B6D; /* Honey Oak / Light Timber */
+  --secondary-hover: #A87A4F;
+  --accent: #5F7D4A; /* Organic Sage Green */
+  --background: #FAF6F0; /* Warm Natural Cream / Alabaster */
   --surface: #FFFFFF;
-  --surface-alt: #F3E5D0; /* Beige */
+  --surface-alt: #F4ECE1; /* Light Birch wood / warm beige */
   
-  --text-main: #2B2118; /* Dark Text */
-  --text-muted: #6B5542; /* Soft brown for muted text */
+  --text-main: #2C2016; /* Deep Espresso Brown */
+  --text-muted: #7A6453; /* Warm Cedar text */
   
-  --border: #E2E8F0;
+  --border: #E8DED1; /* Soft Warm Timber Border */
   
   --radius-sm: 8px;
   --radius-md: 16px;

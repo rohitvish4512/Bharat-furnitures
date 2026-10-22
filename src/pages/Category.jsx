@@ -1,13 +1,16 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import ProductCard from '../components/ProductCard';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { ChevronDown, Sliders, RotateCcw } from 'lucide-react';
+import { ChevronDown, Sliders, RotateCcw, Search, X } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 
 export default function Category() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentSearchTerm = searchParams.get('q') || '';
+
   const [sortBy, setSortBy] = useState('popular');
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState({ name: 'Loading...', id: 'all' });
@@ -72,8 +75,21 @@ export default function Category() {
 
   const currentMax = priceLimit !== null ? priceLimit : maxProductPrice;
 
-  // Filter products by price
+  // Filter products by search query and price
   let filteredProducts = products.filter(p => {
+    // 1. Search term match (in name, description, category, or dimensions)
+    if (currentSearchTerm.trim()) {
+      const q = currentSearchTerm.toLowerCase();
+      const nameMatch = p.name && p.name.toLowerCase().includes(q);
+      const descMatch = p.description && p.description.toLowerCase().includes(q);
+      const catMatch = p.category && p.category.toLowerCase().includes(q);
+      const dimMatch = p.dimensions && p.dimensions.toLowerCase().includes(q);
+      if (!nameMatch && !descMatch && !catMatch && !dimMatch) {
+        return false;
+      }
+    }
+
+    // 2. Price filter
     if (priceLimit !== null) {
       return (Number(p.price) || 0) <= priceLimit;
     }
@@ -96,11 +112,31 @@ export default function Category() {
           </div>
         ) : (
           <>
-            <div className="mb-7">
-              <h1 className="font-heading font-extrabold text-2xl md:text-3xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-1">
-                {category.name}
-              </h1>
-              <p className="text-sm text-text-muted">Showing smart solutions for your space.</p>
+            <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h1 className="font-heading font-extrabold text-2xl md:text-3xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-1">
+                  {category.name}
+                </h1>
+                <p className="text-sm text-text-muted">Showing smart solutions for your space.</p>
+              </div>
+
+              {currentSearchTerm && (
+                <div className="flex items-center gap-2 bg-[#F4ECE1] border border-[#E8DED1] px-3.5 py-1.5 rounded-full text-xs font-medium text-text-main">
+                  <Search size={13} className="text-primary" />
+                  <span>Search: <strong>"{currentSearchTerm}"</strong></span>
+                  <button 
+                    onClick={() => {
+                      const newParams = new URLSearchParams(searchParams);
+                      newParams.delete('q');
+                      setSearchParams(newParams);
+                    }}
+                    className="ml-1 text-text-muted hover:text-red-600 transition-colors"
+                    title="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Toolbar with Price Range volume slider dropdown & Sort By */}
@@ -186,13 +222,33 @@ export default function Category() {
               </div>
             ) : (
               <div className="text-center py-16 bg-surface rounded-2xl border border-border p-8">
-                <div className="text-text-muted mb-4 text-sm">No products found in this price range.</div>
-                <button 
-                  className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-full text-sm font-semibold transition-all shadow-md" 
-                  onClick={() => setPriceLimit(null)}
-                >
-                  Clear Price Filter
-                </button>
+                <div className="text-text-muted mb-4 text-sm">
+                  {currentSearchTerm 
+                    ? `No products found matching "${currentSearchTerm}".`
+                    : 'No products found in this price range.'}
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  {priceLimit !== null && (
+                    <button 
+                      className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-full text-sm font-semibold transition-all shadow-md" 
+                      onClick={() => setPriceLimit(null)}
+                    >
+                      Clear Price Filter
+                    </button>
+                  )}
+                  {currentSearchTerm && (
+                    <button 
+                      className="px-6 py-2.5 bg-[#FAF6F0] border border-[#E8DED1] hover:bg-[#F4ECE1] text-text-main rounded-full text-sm font-semibold transition-all" 
+                      onClick={() => {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.delete('q');
+                        setSearchParams(newParams);
+                      }}
+                    >
+                      Clear Search
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </>

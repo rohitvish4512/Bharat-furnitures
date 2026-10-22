@@ -80,11 +80,11 @@ export default function Home() {
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
-              <p className="text-[#c2410c] text-xs font-semibold mb-1">Upto 60% OFF</p>
+              <p className="text-primary text-xs font-semibold mb-1">Upto 60% OFF</p>
               <h4 className="font-heading text-sm font-bold text-text-main mb-3">{cat.name.toUpperCase()}</h4>
               <Link 
                 to={`/category/${cat.id}`} 
-                className="inline-flex items-center gap-1 bg-[#1e1b4b] hover:bg-[#2e2a72] text-white text-xs font-medium px-5 py-2 rounded-full transition-all duration-200 hover:shadow-md"
+                className="inline-flex items-center gap-1 bg-primary hover:bg-primary-hover text-white text-xs font-medium px-5 py-2 rounded-full transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 Shop &rarr;
               </Link>

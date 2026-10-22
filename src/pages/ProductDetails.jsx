@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Sidebar from '../components/Sidebar';
@@ -23,16 +23,21 @@ import {
   ZoomIn,
   X
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { currentUser, openAuthModal } = useAuth();
+  const { addToCart, isInCart, openCart } = useCart();
+  const { isLiked, toggleWishlist } = useWishlist();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImgIndex, setSelectedImgIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
 
   // Keyboard navigation for image modal
   useEffect(() => {
@@ -124,9 +129,41 @@ export default function ProductDetails() {
     rawImages[3] || fallbackGallery[3]
   ].slice(0, 4);
 
+  const inCart = product ? isInCart(product.id) : false;
+  const liked = product ? isLiked(product.id) : false;
+
   const handleAddToCart = () => {
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+    // If already in cart, open cart drawer to adjust quantity
+    if (inCart) {
+      openCart();
+      return;
+    }
+
+    // Condition 2: Login mandatory before adding to cart
+    if (!currentUser) {
+      openAuthModal('cart', () => {
+        addToCart(product, quantity);
+        openCart();
+      });
+      return;
+    }
+
+    addToCart(product, quantity);
+    openCart();
+  };
+
+  const handleBuyNow = () => {
+    // Condition 2: Login mandatory before placing order / buy now
+    if (!currentUser) {
+      openAuthModal('order', () => {
+        addToCart(product, quantity);
+        navigate('/checkout');
+      });
+      return;
+    }
+
+    addToCart(product, quantity);
+    navigate('/checkout');
   };
 
   return (
@@ -217,12 +254,12 @@ export default function ProductDetails() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsWishlisted(!isWishlisted);
+                  toggleWishlist(product);
                 }}
                 className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all text-stone-600 hover:text-rose-500 z-10"
-                aria-label="Add to wishlist"
+                aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
               >
-                <Heart size={20} className={isWishlisted ? "fill-rose-500 text-rose-500" : "transition-colors"} />
+                <Heart size={20} className={liked ? "fill-rose-500 text-rose-500" : "transition-colors"} />
               </button>
 
               {/* Stock Indicator */}
@@ -380,15 +417,15 @@ export default function ProductDetails() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className={`flex-1 py-3.5 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-md ${addedToCart
-                    ? 'bg-emerald-600 text-white'
+                  className={`flex-1 py-3.5 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-md ${inCart
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
                     : 'bg-[#8B5E34] hover:bg-[#5C3A21] text-white hover:shadow-lg'
                     }`}
                 >
-                  {addedToCart ? (
+                  {inCart ? (
                     <>
-                      <Check size={18} />
-                      <span>Added to Cart!</span>
+                      <Check size={18} className="stroke-[2.5]" />
+                      <span>Added to Cart</span>
                     </>
                   ) : (
                     <>
@@ -399,6 +436,7 @@ export default function ProductDetails() {
                 </button>
                 <button
                   type="button"
+                  onClick={handleBuyNow}
                   className="flex-1 py-3.5 px-6 rounded-xl font-bold text-sm bg-stone-900 hover:bg-black text-white transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   Buy Now

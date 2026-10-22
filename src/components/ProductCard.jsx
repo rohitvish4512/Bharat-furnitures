@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Star, Ruler, Layers, Check } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 export default function ProductCard({ product }) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
+  const { currentUser, openAuthModal } = useAuth();
+  const { addToCart, isInCart, openCart } = useCart();
+  const { isLiked, toggleWishlist } = useWishlist();
 
   const price = Number(product.price) || 0;
   const originalPrice = Number(product.originalPrice) || 0;
@@ -13,10 +17,27 @@ export default function ProductCard({ product }) {
     : 0;
   const savings = originalPrice > price ? originalPrice - price : 0;
 
+  const inCart = isInCart(product.id);
+  const liked = isLiked(product.id);
+
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 1800);
+
+    // If already in cart, clicking opens the cart drawer where user can change quantity!
+    if (inCart) {
+      openCart();
+      return;
+    }
+
+    // Condition 2: Login mandatory before adding to cart
+    if (!currentUser) {
+      openAuthModal('cart', () => {
+        addToCart(product, 1);
+      });
+      return;
+    }
+
+    addToCart(product, 1);
   };
 
   const imageSrc = (product.images && product.images.length > 0)
@@ -58,14 +79,14 @@ export default function ProductCard({ product }) {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setIsWishlisted(!isWishlisted);
+            toggleWishlist(product);
           }}
           className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all z-10 text-stone-600 hover:text-rose-500"
-          aria-label="Wishlist"
+          aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
         >
           <Heart 
             size={18} 
-            className={isWishlisted ? "fill-rose-500 text-rose-500" : "transition-colors"} 
+            className={liked ? "fill-rose-500 text-rose-500" : "transition-colors"} 
           />
         </button>
 
@@ -155,14 +176,14 @@ export default function ProductCard({ product }) {
             type="button"
             onClick={handleAddToCart}
             className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm active:scale-95 ${
-              addedToCart 
-                ? 'bg-emerald-600 text-white' 
+              inCart 
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-md' 
                 : 'bg-[#8B5E34] hover:bg-[#5C3A21] text-white hover:shadow-md'
             }`}
           >
-            {addedToCart ? (
+            {inCart ? (
               <>
-                <Check size={14} />
+                <Check size={14} className="stroke-[2.5]" />
                 <span>Added</span>
               </>
             ) : (
