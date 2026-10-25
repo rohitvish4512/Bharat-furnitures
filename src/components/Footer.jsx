@@ -13,9 +13,18 @@ export default function Footer() {
         
         {/* 1. Brand Description */}
         <div>
-          <h2 className="font-heading font-extrabold text-2xl bg-gradient-to-r from-[#D4A373] via-[#E9EDC9] to-amber-200 bg-clip-text text-transparent mb-3">
-            Bharat Furnitures
-          </h2>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-[#D4A373] to-amber-200 shadow-md flex items-center justify-center shrink-0">
+              <img 
+                src="/logo.png" 
+                alt="Bharat Furnitures" 
+                className="w-full h-full object-cover rounded-full bg-[#f6ede3]"
+              />
+            </div>
+            <h2 className="font-heading font-extrabold text-2xl bg-gradient-to-r from-[#D4A373] via-[#E9EDC9] to-amber-200 bg-clip-text text-transparent">
+              Bharat Furnitures
+            </h2>
+          </div>
           <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
             Smart, durable, and space-saving furniture designed for modern homes, compact rooms, and everyday comfort.
           </p>

@@ -10,8 +10,10 @@ import {
   ArrowRight, 
   Clock, 
   Phone, 
-  FileText 
+  FileText,
+  MessageSquare
 } from 'lucide-react';
+import { sendWhatsAppUpdate } from '../utils/whatsapp';
 
 export default function OrderSuccess() {
   const { orderId } = useParams();
@@ -109,6 +111,12 @@ export default function OrderSuccess() {
                 <p className="text-xs text-stone-600 mt-2 flex items-center gap-1">
                   <Phone size={13} className="text-stone-400" /> {order.customer?.phone}
                 </p>
+                {order.estimatedDeliveryDate && (
+                  <div className="mt-3 pt-2.5 border-t border-stone-200/80 flex items-center gap-1.5 text-xs text-emerald-800 font-semibold bg-emerald-50/80 px-2.5 py-1.5 rounded-lg">
+                    <Truck size={14} className="text-emerald-700 shrink-0" />
+                    <span>Estimated Delivery: <strong>Within 2 Days ({order.estimatedDeliveryDate})</strong></span>
+                  </div>
+                )}
               </div>
 
               {/* Payment Details */}
@@ -137,6 +145,16 @@ export default function OrderSuccess() {
 
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            {order && (
+              <button
+                type="button"
+                onClick={() => sendWhatsAppUpdate(order, 'Placed')}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <MessageSquare size={16} />
+                <span>Get Updates on WhatsApp</span>
+              </button>
+            )}
             <Link
               to="/orders"
               className="w-full sm:w-auto px-6 py-3 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"

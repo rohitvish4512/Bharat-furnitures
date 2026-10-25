@@ -252,8 +252,8 @@ export default function CartDrawer() {
                   <ShieldCheck size={12} className="text-[#8B5E34]" /> 100% Safe Payments
                 </span>
                 <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Truck size={12} className="text-[#8B5E34]" /> Express Delivery
+                <span className="flex items-center gap-1 font-semibold text-emerald-700">
+                  <Truck size={12} className="text-emerald-700" /> Delivery in 2 Days
                 </span>
               </div>
             </div>

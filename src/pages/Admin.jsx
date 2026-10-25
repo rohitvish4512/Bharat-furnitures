@@ -35,8 +35,11 @@ import {
   Lock,
   KeyRound,
   ShieldCheck,
-  LogOut
+  LogOut,
+  MessageSquare,
+  RotateCcw
 } from 'lucide-react';
+import { sendWhatsAppUpdate } from '../utils/whatsapp';
 
 const generateSignature = async (timestamp, apiSecret) => {
   const str = `timestamp=${timestamp}${apiSecret}`;
@@ -80,7 +83,15 @@ const Admin = () => {
     material: '',
     weight: '',
     badges: '',
-    features: ''
+    features: '',
+    hasWarranty: 'no', // 'yes' | 'no'
+    warrantyDuration: '1',
+    warrantyUnit: 'Years', // 'Months' | 'Years'
+    hasGuarantee: 'no', // 'yes' | 'no'
+    guaranteeDuration: '1',
+    guaranteeUnit: 'Years', // 'Months' | 'Years'
+    returnPolicy: '7 Days Hassle-Free Replacement for transit damages or defective items',
+    deliveryPolicy: 'Free Express Shipping within 2-3 business days with door delivery'
   };
   
   const [formData, setFormData] = useState(initialState);
@@ -272,13 +283,19 @@ const Admin = () => {
 
       await updateDoc(doc(db, 'orders', orderDocId), updateData);
       
+      const updatedOrderObj = { ...order, ...updateData };
+
       // Update local state
-      setOrders(prev => prev.map(o => o.id === orderDocId ? { ...o, ...updateData } : o));
+      setOrders(prev => prev.map(o => o.id === orderDocId ? updatedOrderObj : o));
       if (selectedOrder && selectedOrder.id === orderDocId) {
         setSelectedOrder(prev => ({ ...prev, ...updateData }));
       }
-      setMessage(`Order delivery status updated to "${newStatus}"!${updateData.paymentStatus === 'Paid' ? ' (Payment auto-marked as Paid)' : ''}`);
-      setTimeout(() => setMessage(''), 3500);
+      
+      setMessage(`Order delivery status updated to "${newStatus}"! Click WhatsApp button to notify customer.`);
+      setTimeout(() => setMessage(''), 4500);
+
+      // Auto open WhatsApp with the updated status message
+      sendWhatsAppUpdate(updatedOrderObj, newStatus);
     } catch (err) {
       console.error(err);
       setMessage('Failed to update status: ' + err.message);
@@ -437,6 +454,12 @@ const Admin = () => {
         weight: formData.weight || '',
         badges: badgesArray,
         features: featuresArray,
+        hasWarranty: formData.hasWarranty === 'yes',
+        warranty: formData.hasWarranty === 'yes' ? `${formData.warrantyDuration} ${formData.warrantyUnit}` : 'No Warranty',
+        hasGuarantee: formData.hasGuarantee === 'yes',
+        guarantee: formData.hasGuarantee === 'yes' ? `${formData.guaranteeDuration} ${formData.guaranteeUnit}` : 'No Guarantee',
+        returnPolicy: formData.returnPolicy || '7 Days Replacement for transit damages or defective items',
+        deliveryPolicy: formData.deliveryPolicy || 'Free Express Shipping within 2-3 business days with door delivery',
         images: finalImages,
         isActive: true,
         updatedAt: now
@@ -468,8 +491,36 @@ const Admin = () => {
   };
 
   const handleEditProduct = (prod) => {
+    // Extract warranty duration & unit
+    let hasWarranty = prod.hasWarranty ? 'yes' : (prod.warranty && !prod.warranty.toLowerCase().includes('no') ? 'yes' : 'no');
+    let warrantyDuration = '1';
+    let warrantyUnit = 'Years';
+    if (prod.warranty && hasWarranty === 'yes') {
+      const parts = prod.warranty.split(' ');
+      if (parts[0] && !isNaN(parts[0])) warrantyDuration = parts[0];
+      if (parts[1]) warrantyUnit = parts[1];
+    }
+
+    // Extract guarantee duration & unit
+    let hasGuarantee = prod.hasGuarantee ? 'yes' : (prod.guarantee && !prod.guarantee.toLowerCase().includes('no') ? 'yes' : 'no');
+    let guaranteeDuration = '1';
+    let guaranteeUnit = 'Years';
+    if (prod.guarantee && hasGuarantee === 'yes') {
+      const gParts = prod.guarantee.split(' ');
+      if (gParts[0] && !isNaN(gParts[0])) guaranteeDuration = gParts[0];
+      if (gParts[1]) guaranteeUnit = gParts[1];
+    }
+
     setFormData({
       ...prod,
+      hasWarranty,
+      warrantyDuration,
+      warrantyUnit,
+      hasGuarantee,
+      guaranteeDuration,
+      guaranteeUnit,
+      returnPolicy: prod.returnPolicy || '7 Days Hassle-Free Replacement for transit damages or defective items',
+      deliveryPolicy: prod.deliveryPolicy || 'Free Express Shipping within 2-3 business days with door delivery',
       badges: Array.isArray(prod.badges) ? prod.badges.join(', ') : prod.badges || '',
       features: Array.isArray(prod.features) ? prod.features.join(', ') : prod.features || '',
     });
@@ -1041,34 +1092,174 @@ const Admin = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-bold text-xs text-stone-700 uppercase tracking-wide">
-                    Customer Rating (0 to 5)
-                  </label>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    max="5" 
-                    name="rating" 
-                    value={formData.rating} 
-                    onChange={handleChange} 
-                    placeholder="4.8"
-                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8B5E34] focus:bg-white transition-all" 
-                  />
+                {/* WARRANTY CONFIGURATION */}
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-xs text-stone-800 uppercase tracking-wide flex items-center gap-1.5">
+                      <ShieldCheck size={15} className="text-[#8B5E34]" />
+                      <span>Product Warranty</span>
+                    </label>
+                    <span className="text-[0.68rem] text-stone-500">Repair & Replacement</span>
+                  </div>
+
+                  {/* Yes / No Toggle */}
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                      <input 
+                        type="radio" 
+                        name="hasWarranty" 
+                        value="yes" 
+                        checked={formData.hasWarranty === 'yes'} 
+                        onChange={handleChange}
+                        className="accent-[#8B5E34]" 
+                      />
+                      <span>Yes (Warranty Available)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                      <input 
+                        type="radio" 
+                        name="hasWarranty" 
+                        value="no" 
+                        checked={formData.hasWarranty === 'no'} 
+                        onChange={handleChange}
+                        className="accent-[#8B5E34]" 
+                      />
+                      <span>No Warranty</span>
+                    </label>
+                  </div>
+
+                  {/* Duration input if Yes */}
+                  {formData.hasWarranty === 'yes' && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-stone-200/60 animate-fade-in">
+                      <div className="flex-1">
+                        <input 
+                          type="number" 
+                          min="1" 
+                          name="warrantyDuration" 
+                          value={formData.warrantyDuration} 
+                          onChange={handleChange} 
+                          placeholder="e.g. 1, 2, 6" 
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-[#8B5E34]"
+                        />
+                      </div>
+                      <select 
+                        name="warrantyUnit" 
+                        value={formData.warrantyUnit} 
+                        onChange={handleChange}
+                        className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-800 focus:outline-none focus:border-[#8B5E34] cursor-pointer"
+                      >
+                        <option value="Months">Month(s)</option>
+                        <option value="Years">Year(s)</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-bold text-xs text-stone-700 uppercase tracking-wide">
-                    Review Count
-                  </label>
+                {/* GUARANTEE CONFIGURATION */}
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-xs text-stone-800 uppercase tracking-wide flex items-center gap-1.5">
+                      <CheckCircle2 size={15} className="text-emerald-700" />
+                      <span>Product Guarantee</span>
+                    </label>
+                    <span className="text-[0.68rem] text-stone-500">Moneyback / Replacement</span>
+                  </div>
+
+                  {/* Yes / No Toggle */}
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                      <input 
+                        type="radio" 
+                        name="hasGuarantee" 
+                        value="yes" 
+                        checked={formData.hasGuarantee === 'yes'} 
+                        onChange={handleChange}
+                        className="accent-[#8B5E34]" 
+                      />
+                      <span>Yes (Guarantee Available)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                      <input 
+                        type="radio" 
+                        name="hasGuarantee" 
+                        value="no" 
+                        checked={formData.hasGuarantee === 'no'} 
+                        onChange={handleChange}
+                        className="accent-[#8B5E34]" 
+                      />
+                      <span>No Guarantee</span>
+                    </label>
+                  </div>
+
+                  {/* Duration input if Yes */}
+                  {formData.hasGuarantee === 'yes' && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-stone-200/60 animate-fade-in">
+                      <div className="flex-1">
+                        <input 
+                          type="number" 
+                          min="1" 
+                          name="guaranteeDuration" 
+                          value={formData.guaranteeDuration} 
+                          onChange={handleChange} 
+                          placeholder="e.g. 1, 2, 6" 
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-[#8B5E34]"
+                        />
+                      </div>
+                      <select 
+                        name="guaranteeUnit" 
+                        value={formData.guaranteeUnit} 
+                        onChange={handleChange}
+                        className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-800 focus:outline-none focus:border-[#8B5E34] cursor-pointer"
+                      >
+                        <option value="Months">Month(s)</option>
+                        <option value="Years">Year(s)</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* RETURN POLICY INPUT CARD */}
+                <div className="space-y-1.5 p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-xs text-stone-800 uppercase tracking-wide flex items-center gap-1.5">
+                      <RotateCcw size={15} className="text-[#8B5E34]" />
+                      <span>Return / Replacement Policy</span>
+                    </label>
+                    <span className="text-[0.68rem] text-stone-500">Customer Assurance</span>
+                  </div>
                   <input 
-                    type="number" 
-                    name="reviews" 
-                    value={formData.reviews} 
+                    type="text" 
+                    name="returnPolicy" 
+                    value={formData.returnPolicy} 
                     onChange={handleChange} 
-                    placeholder="128"
-                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8B5E34] focus:bg-white transition-all" 
+                    placeholder="e.g. 7 Days Hassle-Free Replacement for transit damages"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#8B5E34] transition-all"
                   />
+                  <p className="text-[0.68rem] text-stone-400">
+                    Displayed on product page as Return & Exchange policy bar.
+                  </p>
+                </div>
+
+                {/* DELIVERY POLICY INPUT CARD */}
+                <div className="space-y-1.5 p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-xs text-stone-800 uppercase tracking-wide flex items-center gap-1.5">
+                      <Truck size={15} className="text-[#8B5E34]" />
+                      <span>Shipping & Delivery Policy</span>
+                    </label>
+                    <span className="text-[0.68rem] text-stone-500">Dispatch Speed</span>
+                  </div>
+                  <input 
+                    type="text" 
+                    name="deliveryPolicy" 
+                    value={formData.deliveryPolicy} 
+                    onChange={handleChange} 
+                    placeholder="e.g. Free Express Shipping within 2-3 business days"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#8B5E34] transition-all"
+                  />
+                  <p className="text-[0.68rem] text-stone-400">
+                    Displayed on product page as Delivery timeline & handling note.
+                  </p>
                 </div>
 
                 <div className="sm:col-span-2 space-y-1.5">
@@ -1614,14 +1805,27 @@ const Admin = () => {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => setSelectedOrder(order)}
-                          className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Eye size={13} />
-                          <span>View Full Details & Address</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {/* Send WhatsApp Update Button */}
+                          <button
+                            type="button"
+                            onClick={() => sendWhatsAppUpdate(order)}
+                            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                            title="Send status update to customer on WhatsApp"
+                          >
+                            <MessageSquare size={13} />
+                            <span>Notify on WhatsApp</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrder(order)}
+                            className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Eye size={13} />
+                            <span>View Full Details & Address</span>
+                          </button>
+                        </div>
                       </div>
 
                     </div>
@@ -1670,49 +1874,145 @@ const Admin = () => {
               </button>
             </div>
 
+            {/* Order Meta Bar: Order ID, Date, Status */}
+            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 mb-5">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-200">
+                <div>
+                  <span className="text-[0.68rem] text-stone-400 font-bold uppercase tracking-wider block">
+                    Order Tracking ID
+                  </span>
+                  <span className="font-heading font-extrabold text-lg text-[#8B5E34]">
+                    {selectedOrder.orderId || selectedOrder.id}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[0.68rem] text-stone-400 font-bold uppercase tracking-wider block">
+                    Order Placed At
+                  </span>
+                  <span className="text-xs font-bold text-stone-800">
+                    {selectedOrder.createdAtFormatted || 'Just Now'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Delivery Timing Highlight */}
+              <div className="mt-3 flex items-center justify-between text-xs bg-amber-50/80 border border-amber-200/70 p-2.5 rounded-xl text-[#8B5E34]">
+                <span className="flex items-center gap-1.5 font-bold">
+                  <Truck size={14} className="text-[#8B5E34]" />
+                  <span>Guaranteed Delivery:</span>
+                </span>
+                <span className="font-bold text-stone-900">
+                  {selectedOrder.estimatedDeliveryDate ? `Within 2 Days (${selectedOrder.estimatedDeliveryDate})` : 'Within 2-3 Business Days'}
+                </span>
+              </div>
+            </div>
+
             {/* Customer & Address Details */}
-            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 mb-5 text-xs space-y-1.5">
-              <p className="font-bold text-stone-900 text-sm">{selectedOrder.customer?.fullName}</p>
-              <p className="text-stone-600 flex items-center gap-1.5">
-                <Phone size={13} className="text-stone-400" /> 
-                <span>Phone: <span className="font-bold text-stone-800">{selectedOrder.customer?.phone}</span></span>
-              </p>
-              <p className="text-stone-600 flex items-center gap-1.5">
-                <Mail size={13} className="text-stone-400" /> 
-                <span>Email: {selectedOrder.customer?.email || 'N/A'}</span>
-              </p>
-              <div className="pt-2 border-t border-stone-200 mt-2">
-                <p className="text-stone-500 font-bold uppercase text-[0.68rem] flex items-center gap-1">
-                  <MapPin size={12} className="text-[#8B5E34]" /> Shipping Address:
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5 text-xs">
+              {/* Customer Box */}
+              <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 space-y-2">
+                <h4 className="font-bold text-stone-900 uppercase text-[0.68rem] tracking-wide flex items-center gap-1 text-[#8B5E34]">
+                  <Phone size={12} /> Customer Contact
+                </h4>
+                <p className="font-bold text-stone-900 text-sm">{selectedOrder.customer?.fullName}</p>
+                <p className="text-stone-600 flex items-center gap-1.5">
+                  <Phone size={12} className="text-stone-400" />
+                  <span>Mobile: <strong className="text-stone-900">{selectedOrder.customer?.phone}</strong></span>
                 </p>
-                <p className="text-stone-800 mt-1 leading-relaxed font-medium">
-                  {selectedOrder.customer?.address}, {selectedOrder.customer?.city}, {selectedOrder.customer?.state} - {selectedOrder.customer?.pincode}
+                <p className="text-stone-600 flex items-center gap-1.5">
+                  <Mail size={12} className="text-stone-400" />
+                  <span>Email: <span className="text-stone-700">{selectedOrder.customer?.email || 'N/A'}</span></span>
+                </p>
+              </div>
+
+              {/* Full Delivery Address Box */}
+              <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 space-y-2">
+                <h4 className="font-bold text-stone-900 uppercase text-[0.68rem] tracking-wide flex items-center gap-1 text-[#8B5E34]">
+                  <MapPin size={12} /> Delivery Destination
+                </h4>
+                <p className="text-stone-800 font-medium leading-relaxed">
+                  {selectedOrder.customer?.address}
+                </p>
+                <p className="text-stone-700 font-semibold">
+                  {selectedOrder.customer?.city}, {selectedOrder.customer?.state} - <span className="font-bold text-stone-900">{selectedOrder.customer?.pincode}</span>
                 </p>
                 {selectedOrder.customer?.landmark && (
-                  <p className="text-stone-500 text-[0.68rem] mt-0.5">
-                    Landmark: <span className="font-semibold text-stone-700">{selectedOrder.customer?.landmark}</span>
+                  <p className="text-[0.7rem] text-stone-500 bg-white p-1.5 rounded-lg border border-stone-200/60">
+                    <span className="font-bold text-stone-700">Landmark:</span> {selectedOrder.customer?.landmark}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Items List */}
-            <h4 className="text-xs font-bold text-stone-700 uppercase mb-2">Ordered Furniture Items:</h4>
-            <div className="divide-y divide-stone-100 border border-stone-200 rounded-2xl p-3 mb-5 max-h-52 overflow-y-auto">
-              {selectedOrder.items?.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover border border-stone-200" />
-                    <div>
-                      <p className="text-xs font-bold text-stone-900">{item.name}</p>
-                      <p className="text-[0.68rem] text-stone-500">Qty: {item.quantity} × ₹{item.price}</p>
+            {/* Items List with Material, Dimensions, Qty & Price */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">
+                  Ordered Items ({selectedOrder.items?.length || 0})
+                </h4>
+                <span className="text-[0.68rem] text-stone-400 font-medium">
+                  Total Items Qty: {selectedOrder.totalItems || selectedOrder.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1}
+                </span>
+              </div>
+              <div className="divide-y divide-stone-100 border border-stone-200 rounded-2xl p-3 bg-white max-h-56 overflow-y-auto space-y-1">
+                {selectedOrder.items?.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-2.5 first:pt-1 last:pb-1">
+                    <div className="flex items-center gap-3">
+                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover border border-stone-200 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-stone-900">{item.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[0.68rem] text-stone-500">
+                          <span>Qty: <strong className="text-stone-700">{item.quantity}</strong> × ₹{item.price?.toLocaleString('en-IN')}</span>
+                          {item.material && <span>• {item.material}</span>}
+                          {item.dimensions && <span>• {item.dimensions}</span>}
+                        </div>
+                      </div>
                     </div>
+                    <span className="text-xs font-bold text-stone-900">
+                      ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                    </span>
                   </div>
-                  <span className="text-xs font-bold text-stone-900">
-                    ₹{(item.price * item.quantity).toLocaleString('en-IN')}
-                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Details Breakdown (Matches Checkout Summary) */}
+            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 mb-5 space-y-2 text-xs">
+              <h4 className="font-bold text-stone-700 uppercase text-[0.68rem] tracking-wide mb-2 pb-1 border-b border-stone-200">
+                Payment & Billing Breakdown
+              </h4>
+              <div className="flex justify-between text-stone-600">
+                <span>Subtotal Items</span>
+                <span className="font-semibold text-stone-900">₹{selectedOrder.totalAmount?.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between text-stone-600">
+                <span className="flex items-center gap-1">
+                  <Truck size={12} className="text-[#8B5E34]" /> Express Delivery
+                </span>
+                <span className="font-semibold text-emerald-700 uppercase">FREE</span>
+              </div>
+              {selectedOrder.totalSavings > 0 && (
+                <div className="flex justify-between text-emerald-700 font-bold">
+                  <span>Festive Discount</span>
+                  <span>-₹{selectedOrder.totalSavings.toLocaleString('en-IN')}</span>
                 </div>
-              ))}
+              )}
+              <div className="flex justify-between text-stone-600">
+                <span>Payment Method</span>
+                <span className="font-bold text-stone-900">{selectedOrder.paymentMethod}</span>
+              </div>
+              {selectedOrder.razorpayPaymentId && (
+                <div className="flex justify-between text-stone-600 text-[0.7rem] bg-white p-2 rounded-xl border border-stone-200">
+                  <span className="font-bold text-stone-700">Razorpay Payment ID:</span>
+                  <span className="font-mono text-stone-900 break-all">{selectedOrder.razorpayPaymentId}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-extrabold text-stone-900 pt-2 border-t border-stone-200">
+                <span>Total Received / Payable</span>
+                <span className="font-heading text-lg text-[#8B5E34]">
+                  ₹{selectedOrder.totalAmount?.toLocaleString('en-IN')}
+                </span>
+              </div>
             </div>
 
             {/* Quick Status Modifiers Inside Modal */}
@@ -1765,23 +2065,24 @@ const Admin = () => {
               </div>
             </div>
 
-            {/* Total & Current Status */}
-            <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-              <div>
-                <span className="text-[0.68rem] text-stone-400 uppercase font-bold block">Grand Total</span>
-                <span className="font-heading font-extrabold text-xl text-[#8B5E34]">
-                  ₹{selectedOrder.totalAmount?.toLocaleString('en-IN')}
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="text-[0.68rem] text-stone-400 uppercase font-bold block">Payment Method</span>
-                <span className="text-xs font-bold text-stone-800">{selectedOrder.paymentMethod}</span>
-                {selectedOrder.razorpayPaymentId && (
-                  <span className="block text-[0.65rem] font-mono text-stone-500">
-                    Txn: {selectedOrder.razorpayPaymentId}
-                  </span>
-                )}
-              </div>
+            {/* Action Bar Footer */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>🖨️ Print Invoice / Order Slip</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => sendWhatsAppUpdate(selectedOrder)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <MessageSquare size={14} />
+                <span>Notify Customer on WhatsApp</span>
+              </button>
             </div>
 
           </div>

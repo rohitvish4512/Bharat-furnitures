@@ -5,6 +5,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { ChevronDown, Sliders, RotateCcw, Search, X } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import { products as fallbackProducts, categories as fallbackCategories } from '../data/products';
 
 export default function Category() {
   const { id } = useParams();
@@ -38,26 +39,52 @@ export default function Category() {
       try {
         // Fetch specific category details
         if (id && id !== 'all') {
-          const catSnap = await getDocs(query(collection(db, 'categories'), where('id', '==', id)));
-          if (!catSnap.empty) {
-            setCategory({ id: catSnap.docs[0].id, ...catSnap.docs[0].data() });
-          } else {
-            setCategory({ name: 'Category Not Found', id });
+          try {
+            const catSnap = await getDocs(query(collection(db, 'categories'), where('id', '==', id)));
+            if (!catSnap.empty) {
+              setCategory({ id: catSnap.docs[0].id, ...catSnap.docs[0].data() });
+            } else {
+              const matchedFallback = fallbackCategories.find(c => c.id === id);
+              if (matchedFallback) {
+                setCategory(matchedFallback);
+              } else {
+                setCategory({ name: 'Category Not Found', id });
+              }
+            }
+          } catch (catErr) {
+            console.warn("Category fetch error, using fallback:", catErr);
+            const matchedFallback = fallbackCategories.find(c => c.id === id);
+            setCategory(matchedFallback || { name: 'Category Not Found', id });
           }
         } else {
           setCategory({ name: 'All Products', id: 'all' });
         }
 
         // Fetch products for this category
-        let prodQuery;
-        if (id && id !== 'all') {
-          prodQuery = query(collection(db, 'products'), where('categoryId', '==', id));
-        } else {
-          prodQuery = collection(db, 'products');
+        let prodData = [];
+        try {
+          let prodQuery;
+          if (id && id !== 'all') {
+            prodQuery = query(collection(db, 'products'), where('categoryId', '==', id));
+          } else {
+            prodQuery = collection(db, 'products');
+          }
+
+          const prodSnap = await getDocs(prodQuery);
+          prodData = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (prodErr) {
+          console.warn("Firestore products fetch failed, using fallback:", prodErr);
         }
 
-        const prodSnap = await getDocs(prodQuery);
-        const prodData = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // If Firestore had 0 products or failed, use fallback products
+        if (!prodData || prodData.length === 0) {
+          if (id && id !== 'all') {
+            prodData = fallbackProducts.filter(p => p.categoryId === id);
+          } else {
+            prodData = fallbackProducts;
+          }
+        }
+
         setProducts(prodData);
         setPriceLimit(null); // Reset filter when category changes
       } catch (error) {
@@ -77,14 +104,22 @@ export default function Category() {
 
   // Filter products by search query and price
   let filteredProducts = products.filter(p => {
-    // 1. Search term match (in name, description, category, or dimensions)
+    // 1. Search term match (in name, description, category, dimensions, features, material)
     if (currentSearchTerm.trim()) {
-      const q = currentSearchTerm.toLowerCase();
-      const nameMatch = p.name && p.name.toLowerCase().includes(q);
-      const descMatch = p.description && p.description.toLowerCase().includes(q);
-      const catMatch = p.category && p.category.toLowerCase().includes(q);
-      const dimMatch = p.dimensions && p.dimensions.toLowerCase().includes(q);
-      if (!nameMatch && !descMatch && !catMatch && !dimMatch) {
+      const q = currentSearchTerm.toLowerCase().trim();
+      const searchWords = q.split(/\s+/).filter(Boolean);
+
+      const nameStr = (p.name || '').toLowerCase();
+      const descStr = (p.description || '').toLowerCase();
+      const catStr = (p.category || p.categoryId || '').toLowerCase();
+      const dimStr = (p.dimensions || '').toLowerCase();
+      const matStr = (p.material || '').toLowerCase();
+      const featStr = Array.isArray(p.features) ? p.features.join(' ').toLowerCase() : '';
+      const fullSearchCorpus = `${nameStr} ${descStr} ${catStr} ${dimStr} ${matStr} ${featStr}`;
+
+      // Match full phrase or all individual query words
+      const matchesAllWords = searchWords.every(word => fullSearchCorpus.includes(word));
+      if (!matchesAllWords) {
         return false;
       }
     }

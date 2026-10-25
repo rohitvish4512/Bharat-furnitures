@@ -19,8 +19,11 @@ import {
   Phone,
   FileText,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Mail,
+  MessageSquare
 } from 'lucide-react';
+import { sendWhatsAppUpdate } from '../utils/whatsapp';
 
 const TRACKING_STEPS = [
   { 
@@ -377,21 +380,21 @@ export default function MyOrders() {
 
       </div>
 
-      {/* FULL ORDER DETAILS MODAL */}
+      {/* FULL ORDER DETAILS MODAL FOR CUSTOMER */}
       {selectedOrderForModal && (
         <div 
           className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setSelectedOrderForModal(null)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-stone-200"
+            className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-stone-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
               <div>
                 <span className="text-[0.68rem] font-bold text-[#8B5E34] uppercase tracking-wider block">
-                  Official Order Receipt
+                  Official Order Receipt & Details
                 </span>
                 <h3 className="font-heading font-extrabold text-xl text-stone-900 mt-0.5">
                   {selectedOrderForModal.orderId || selectedOrderForModal.id}
@@ -405,79 +408,174 @@ export default function MyOrders() {
               </button>
             </div>
 
-            {/* Delivery Address */}
-            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 mb-5 text-xs space-y-1.5">
-              <p className="font-bold text-stone-900 text-sm">{selectedOrderForModal.customer?.fullName}</p>
-              <p className="text-stone-600 flex items-center gap-1.5">
-                <Phone size={13} className="text-stone-400" />
-                <span>Phone: <span className="font-bold text-stone-800">{selectedOrderForModal.customer?.phone}</span></span>
-              </p>
-              <div className="pt-2 border-t border-stone-200 mt-2">
-                <p className="text-stone-500 font-bold uppercase text-[0.68rem] flex items-center gap-1">
-                  <MapPin size={12} className="text-[#8B5E34]" /> Shipping Address:
+            {/* Order Tracking & Delivery Timing Highlight */}
+            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 mb-5">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-200">
+                <div>
+                  <span className="text-[0.68rem] text-stone-400 font-bold uppercase tracking-wider block">
+                    Order Status
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 mt-0.5">
+                    <Clock size={12} />
+                    <span>{selectedOrderForModal.orderStatus || 'Placed'}</span>
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[0.68rem] text-stone-400 font-bold uppercase tracking-wider block">
+                    Order Placed At
+                  </span>
+                  <span className="text-xs font-bold text-stone-800">
+                    {selectedOrderForModal.createdAtFormatted || 'Recently'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Delivery Timing Highlight */}
+              <div className="mt-3 flex items-center justify-between text-xs bg-amber-50/80 border border-amber-200/70 p-2.5 rounded-xl text-[#8B5E34]">
+                <span className="flex items-center gap-1.5 font-bold">
+                  <Truck size={14} className="text-[#8B5E34]" />
+                  <span>Guaranteed Delivery:</span>
+                </span>
+                <span className="font-bold text-stone-900">
+                  {selectedOrderForModal.estimatedDeliveryDate ? `Within 2 Days (${selectedOrderForModal.estimatedDeliveryDate})` : 'Within 2-3 Business Days'}
+                </span>
+              </div>
+            </div>
+
+            {/* Delivery Address & Contact Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5 text-xs">
+              <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 space-y-2">
+                <h4 className="font-bold text-stone-900 uppercase text-[0.68rem] tracking-wide flex items-center gap-1 text-[#8B5E34]">
+                  <Phone size={12} /> Contact Information
+                </h4>
+                <p className="font-bold text-stone-900 text-sm">{selectedOrderForModal.customer?.fullName}</p>
+                <p className="text-stone-600 flex items-center gap-1.5">
+                  <Phone size={12} className="text-stone-400" />
+                  <span>Phone: <strong className="text-stone-900">{selectedOrderForModal.customer?.phone}</strong></span>
                 </p>
-                <p className="text-stone-800 mt-1 leading-relaxed font-medium">
-                  {selectedOrderForModal.customer?.address}, {selectedOrderForModal.customer?.city}, {selectedOrderForModal.customer?.state} - {selectedOrderForModal.customer?.pincode}
+                <p className="text-stone-600 flex items-center gap-1.5">
+                  <Mail size={12} className="text-stone-400" />
+                  <span>Email: <span className="text-stone-700">{selectedOrderForModal.customer?.email || 'N/A'}</span></span>
+                </p>
+              </div>
+
+              <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 space-y-2">
+                <h4 className="font-bold text-stone-900 uppercase text-[0.68rem] tracking-wide flex items-center gap-1 text-[#8B5E34]">
+                  <MapPin size={12} /> Delivery Address
+                </h4>
+                <p className="text-stone-800 font-medium leading-relaxed">
+                  {selectedOrderForModal.customer?.address}
+                </p>
+                <p className="text-stone-700 font-semibold">
+                  {selectedOrderForModal.customer?.city}, {selectedOrderForModal.customer?.state} - <span className="font-bold text-stone-900">{selectedOrderForModal.customer?.pincode}</span>
                 </p>
                 {selectedOrderForModal.customer?.landmark && (
-                  <p className="text-stone-500 text-[0.68rem] mt-0.5">
-                    Landmark: <span className="font-semibold text-stone-700">{selectedOrderForModal.customer?.landmark}</span>
+                  <p className="text-[0.7rem] text-stone-500 bg-white p-1.5 rounded-lg border border-stone-200/60">
+                    <span className="font-bold text-stone-700">Landmark:</span> {selectedOrderForModal.customer?.landmark}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Items Breakdown */}
-            <h4 className="text-xs font-bold text-stone-700 uppercase mb-2">Ordered Furniture:</h4>
-            <div className="divide-y divide-stone-100 border border-stone-200 rounded-2xl p-3 mb-5 max-h-52 overflow-y-auto">
-              {selectedOrderForModal.items?.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover border border-stone-200" />
-                    <div>
-                      <p className="text-xs font-bold text-stone-900">{item.name}</p>
-                      <p className="text-[0.68rem] text-stone-500">Qty: {item.quantity} × ₹{item.price?.toLocaleString('en-IN')}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-bold text-stone-900">
-                    ₹{(item.price * item.quantity).toLocaleString('en-IN')}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Payment & Grand Total Summary */}
-            <div className="p-4 rounded-2xl bg-[#8B5E34]/5 border border-[#8B5E34]/15 mb-4 text-xs space-y-1.5">
-              <div className="flex justify-between text-stone-600">
-                <span>Payment Method:</span>
-                <span className="font-bold text-stone-900">{selectedOrderForModal.paymentMethod}</span>
-              </div>
-              <div className="flex justify-between text-stone-600">
-                <span>Payment Status:</span>
-                <span className={`font-bold ${
-                  selectedOrderForModal.paymentStatus === 'Paid' ? 'text-emerald-700' : 'text-amber-700'
-                }`}>
-                  {selectedOrderForModal.paymentStatus}
+            {/* Items Breakdown with Specs */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">
+                  Ordered Items ({selectedOrderForModal.items?.length || 0})
+                </h4>
+                <span className="text-[0.68rem] text-stone-400 font-medium">
+                  Total Items: {selectedOrderForModal.totalItems || selectedOrderForModal.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1}
                 </span>
               </div>
-              {selectedOrderForModal.razorpayPaymentId && (
-                <div className="flex justify-between text-stone-600 font-mono text-[0.68rem]">
-                  <span>Txn ID:</span>
-                  <span>{selectedOrderForModal.razorpayPaymentId}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-stone-900 font-extrabold text-base pt-2 border-t border-[#8B5E34]/20 mt-2">
-                <span>Total Paid:</span>
-                <span className="text-[#8B5E34]">₹{selectedOrderForModal.totalAmount?.toLocaleString('en-IN')}</span>
+              <div className="divide-y divide-stone-100 border border-stone-200 rounded-2xl p-3 bg-white max-h-56 overflow-y-auto space-y-1">
+                {selectedOrderForModal.items?.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-2.5 first:pt-1 last:pb-1">
+                    <div className="flex items-center gap-3">
+                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover border border-stone-200 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-stone-900">{item.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[0.68rem] text-stone-500">
+                          <span>Qty: <strong className="text-stone-700">{item.quantity}</strong> × ₹{item.price?.toLocaleString('en-IN')}</span>
+                          {item.material && <span>• {item.material}</span>}
+                          {item.dimensions && <span>• {item.dimensions}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-stone-900">
+                      ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <button
-              onClick={() => setSelectedOrderForModal(null)}
-              className="w-full py-3 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
-            >
-              Close Details
-            </button>
+            {/* Price Details Breakdown (Matches Checkout Summary) */}
+            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 mb-5 space-y-2 text-xs">
+              <h4 className="font-bold text-stone-700 uppercase text-[0.68rem] tracking-wide mb-2 pb-1 border-b border-stone-200">
+                Payment & Billing Breakdown
+              </h4>
+              <div className="flex justify-between text-stone-600">
+                <span>Subtotal</span>
+                <span className="font-semibold text-stone-900">₹{selectedOrderForModal.totalAmount?.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between text-stone-600">
+                <span className="flex items-center gap-1">
+                  <Truck size={12} className="text-[#8B5E34]" /> Express Delivery
+                </span>
+                <span className="font-semibold text-emerald-700 uppercase">FREE</span>
+              </div>
+              {selectedOrderForModal.totalSavings > 0 && (
+                <div className="flex justify-between text-emerald-700 font-bold">
+                  <span>Festive Discount</span>
+                  <span>-₹{selectedOrderForModal.totalSavings.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-stone-600">
+                <span>Payment Method</span>
+                <span className="font-bold text-stone-900">{selectedOrderForModal.paymentMethod}</span>
+              </div>
+              {selectedOrderForModal.razorpayPaymentId && (
+                <div className="flex justify-between text-stone-600 text-[0.7rem] bg-white p-2 rounded-xl border border-stone-200">
+                  <span className="font-bold text-stone-700">Payment ID:</span>
+                  <span className="font-mono text-stone-900 break-all">{selectedOrderForModal.razorpayPaymentId}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-extrabold text-stone-900 pt-2 border-t border-stone-200">
+                <span>Total Amount</span>
+                <span className="font-heading text-lg text-[#8B5E34]">
+                  ₹{selectedOrderForModal.totalAmount?.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>🖨️ Print Receipt</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => sendWhatsAppUpdate(selectedOrderForModal)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <MessageSquare size={14} />
+                <span>Save to WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedOrderForModal(null)}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition-all active:scale-95 cursor-pointer ml-auto"
+              >
+                Close
+              </button>
+            </div>
+
           </div>
         </div>
       )}

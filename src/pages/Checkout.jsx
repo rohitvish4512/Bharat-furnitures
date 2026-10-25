@@ -17,13 +17,24 @@ import {
   Mail, 
   CheckCircle2, 
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Loader2,
+  Check
 } from 'lucide-react';
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { cart, totalAmount, totalSavings, totalItems, clearCart } = useCart();
   const { currentUser, openAuthModal } = useAuth();
+
+  // Delivery within 2 days
+  const deliveryDate = new Date();
+  deliveryDate.setDate(deliveryDate.getDate() + 2);
+  const formattedDeliveryDate = deliveryDate.toLocaleDateString('en-IN', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
 
   const [formData, setFormData] = useState({
     fullName: currentUser?.displayName || '',
@@ -40,11 +51,74 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Pincode lookup states
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeError, setPincodeError] = useState('');
+  const [pincodeSuccess, setPincodeSuccess] = useState(false);
+
+  // Auto fetch City and State from India Post API using Pincode
+  const fetchAddressByPincode = async (pin) => {
+    if (!/^\d{6}$/.test(pin)) {
+      setPincodeError('Please enter a valid 6-digit Indian pincode');
+      setPincodeSuccess(false);
+      return;
+    }
+
+    setPincodeLoading(true);
+    setPincodeError('');
+    setPincodeSuccess(false);
+
+    try {
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const data = await response.json();
+
+      if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
+        const postOffice = data[0].PostOffice[0];
+        const detectedCity = postOffice.District || postOffice.Block || postOffice.Name || '';
+        const detectedState = postOffice.State || '';
+
+        setFormData((prev) => ({
+          ...prev,
+          city: detectedCity,
+          state: detectedState
+        }));
+        setPincodeSuccess(true);
+        setPincodeError('');
+      } else {
+        setPincodeError('Invalid Pincode. Please check and enter a valid delivery pincode.');
+        setPincodeSuccess(false);
+      }
+    } catch (err) {
+      console.error('Error fetching pincode info:', err);
+      setPincodeError('Unable to verify pincode. Please enter city & state manually.');
+    } finally {
+      setPincodeLoading(false);
+    }
+  };
+
   // Handle inputs
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'pincode') {
+      const sanitizedPin = value.replace(/\D/g, '').slice(0, 6);
+      setFormData((prev) => ({
+        ...prev,
+        pincode: sanitizedPin
+      }));
+
+      if (sanitizedPin.length === 6) {
+        fetchAddressByPincode(sanitizedPin);
+      } else {
+        setPincodeError('');
+        setPincodeSuccess(false);
+      }
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }));
   };
 
@@ -85,6 +159,7 @@ export default function Checkout() {
       razorpayOrderId: paymentDetails?.razorpay_order_id || null,
       razorpaySignature: paymentDetails?.razorpay_signature || null,
       orderStatus: 'Placed',
+      estimatedDeliveryDate: formattedDeliveryDate,
       createdAt: serverTimestamp(),
       createdAtFormatted: new Date().toLocaleString('en-IN')
     };
@@ -175,6 +250,11 @@ export default function Checkout() {
 
     if (formData.phone.trim().length < 10) {
       setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(formData.pincode.trim()) || pincodeError) {
+      setError('Please provide a valid 6-digit delivery pincode.');
       return;
     }
 
@@ -351,50 +431,92 @@ export default function Checkout() {
                   />
                 </div>
 
-                {/* City */}
+                {/* Pincode (First to autofill City & State) */}
+                <div className="sm:col-span-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-stone-700">
+                      Pincode <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[0.68rem] text-stone-400">
+                      Enter 6-digit pin to auto-detect City & State
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="pincode"
+                      required
+                      maxLength={6}
+                      value={formData.pincode}
+                      onChange={handleChange}
+                      placeholder="e.g. 110001, 400001, 302001"
+                      className={`w-full px-3.5 py-2.5 bg-stone-50 border rounded-xl text-xs sm:text-sm focus:outline-none transition-colors ${
+                        pincodeError 
+                          ? 'border-rose-300 bg-rose-50/30 text-rose-900 focus:border-rose-500' 
+                          : pincodeSuccess 
+                            ? 'border-emerald-300 bg-emerald-50/20 text-stone-900 focus:border-emerald-500' 
+                            : 'border-stone-200 focus:border-[#8B5E34] focus:bg-white'
+                      }`}
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                      {pincodeLoading && (
+                        <Loader2 size={16} className="text-[#8B5E34] animate-spin" />
+                      )}
+                      {pincodeSuccess && !pincodeLoading && (
+                        <span className="flex items-center gap-1 text-[0.68rem] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
+                          <Check size={12} /> Verified
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pincode Error Message */}
+                  {pincodeError && (
+                    <div className="flex items-center gap-1.5 mt-1.5 text-rose-600 text-[0.72rem] font-medium animate-fadeIn">
+                      <AlertCircle size={13} className="shrink-0" />
+                      <span>{pincodeError}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* City (Auto-filled) */}
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                    City <span className="text-rose-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-stone-700">
+                      City <span className="text-rose-500">*</span>
+                    </label>
+                    {pincodeSuccess && (
+                      <span className="text-[0.65rem] text-emerald-700 font-semibold">Auto-detected</span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     name="city"
                     required
                     value={formData.city}
                     onChange={handleChange}
-                    placeholder="City"
+                    placeholder="City / District"
                     className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#8B5E34] focus:bg-white transition-colors"
                   />
                 </div>
 
-                {/* State */}
+                {/* State (Auto-filled) */}
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                    State
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-stone-700">
+                      State <span className="text-rose-500">*</span>
+                    </label>
+                    {pincodeSuccess && (
+                      <span className="text-[0.65rem] text-emerald-700 font-semibold">Auto-detected</span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     name="state"
+                    required
                     value={formData.state}
                     onChange={handleChange}
                     placeholder="State"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#8B5E34] focus:bg-white transition-colors"
-                  />
-                </div>
-
-                {/* Pincode */}
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                    Pincode <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="pincode"
-                    required
-                    maxLength={6}
-                    value={formData.pincode}
-                    onChange={handleChange}
-                    placeholder="6-digit pincode"
                     className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#8B5E34] focus:bg-white transition-colors"
                   />
                 </div>
@@ -518,11 +640,20 @@ export default function Checkout() {
                   <span className="font-semibold text-stone-900">₹{totalAmount.toLocaleString('en-IN')}</span>
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="flex items-center gap-1">
                     <Truck size={13} className="text-[#8B5E34]" /> Express Delivery
                   </span>
-                  <span className="font-semibold text-emerald-700 uppercase">Free</span>
+                  <div className="text-right">
+                    <span className="font-semibold text-emerald-700 uppercase">Free</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[0.72rem] bg-amber-50/70 border border-amber-200/60 text-[#8B5E34] px-2.5 py-1.5 rounded-lg">
+                  <span className="font-medium flex items-center gap-1.5">
+                    <span>⚡ Guaranteed Delivery:</span>
+                    <strong className="text-stone-900 font-bold">Within 2 Days ({formattedDeliveryDate})</strong>
+                  </span>
                 </div>
 
                 {totalSavings > 0 && (

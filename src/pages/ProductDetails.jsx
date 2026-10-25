@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Sidebar from '../components/Sidebar';
+import { products as fallbackProducts } from '../data/products';
 import {
   Star,
   Heart,
@@ -21,7 +22,10 @@ import {
   ChevronLeft,
   Package,
   ZoomIn,
-  X
+  X,
+  Share2,
+  Copy,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -38,6 +42,46 @@ export default function ProductDetails() {
   const [selectedImgIndex, setSelectedImgIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  // WhatsApp and Social Share Handler
+  const handleShareWhatsApp = () => {
+    if (!product) return;
+    const currentUrl = window.location.href;
+    const priceText = product.price ? `₹${Number(product.price).toLocaleString('en-IN')}` : '';
+    const shareText = `Check out this ${product.name} on Bharat Furnitures for ${priceText}!\n${currentUrl}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2500);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share && product) {
+      try {
+        await navigator.share({
+          title: `${product.name} | Bharat Furnitures`,
+          text: `Check out ${product.name} on Bharat Furnitures!`,
+          url: window.location.href,
+        });
+      } catch (err) {
+        // Fallback to WhatsApp if user canceled or unsupported
+        if (err.name !== 'AbortError') {
+          handleShareWhatsApp();
+        }
+      }
+    } else {
+      handleShareWhatsApp();
+    }
+  };
 
   // Keyboard navigation for image modal
   useEffect(() => {
@@ -64,10 +108,13 @@ export default function ProductDetails() {
         if (docSnap.exists()) {
           setProduct({ id: docSnap.id, ...docSnap.data() });
         } else {
-          setProduct(null);
+          const fallback = fallbackProducts.find(p => p.id === id);
+          setProduct(fallback || null);
         }
       } catch (error) {
         console.error("Error fetching product details:", error);
+        const fallback = fallbackProducts.find(p => p.id === id);
+        setProduct(fallback || null);
       } finally {
         setLoading(false);
       }
@@ -249,18 +296,35 @@ export default function ProductDetails() {
                 ))}
               </div>
 
-              {/* Wishlist Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleWishlist(product);
-                }}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all text-stone-600 hover:text-rose-500 z-10"
-                aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
-              >
-                <Heart size={20} className={liked ? "fill-rose-500 text-rose-500" : "transition-colors"} />
-              </button>
+              {/* Actions Overlay: Share & Wishlist */}
+              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                {/* Share Button on Image */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShareWhatsApp();
+                  }}
+                  className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all text-stone-700 hover:text-[#25D366] hover:bg-white"
+                  title="Share on WhatsApp"
+                  aria-label="Share on WhatsApp"
+                >
+                  <Share2 size={18} />
+                </button>
+
+                {/* Wishlist Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleWishlist(product);
+                  }}
+                  className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all text-stone-600 hover:text-rose-500"
+                  aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  <Heart size={20} className={liked ? "fill-rose-500 text-rose-500" : "transition-colors"} />
+                </button>
+              </div>
 
               {/* Stock Indicator */}
               {product.stock && Number(product.stock) <= 5 && (
@@ -378,6 +442,29 @@ export default function ProductDetails() {
                     </div>
                   </div>
                 )}
+                
+                {/* Warranty Badge (Only if Available) */}
+                {product.hasWarranty && product.warranty && !product.warranty.toLowerCase().includes('no') ? (
+                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-200/70">
+                    <ShieldCheck size={18} className="text-[#8B5E34] shrink-0" />
+                    <div>
+                      <div className="text-[0.68rem] text-[#8B5E34] font-bold uppercase">Warranty</div>
+                      <div className="text-xs font-bold text-stone-900">{product.warranty}</div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Guarantee Badge (Only if Available) */}
+                {product.hasGuarantee && product.guarantee && !product.guarantee.toLowerCase().includes('no') ? (
+                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
+                    <CheckCircle2 size={18} className="text-emerald-700 shrink-0" />
+                    <div>
+                      <div className="text-[0.68rem] text-emerald-700 font-bold uppercase">Guarantee</div>
+                      <div className="text-xs font-bold text-stone-900">{product.guarantee}</div>
+                    </div>
+                  </div>
+                ) : null}
+
                 {product.stock && (
                   <div className="flex items-center gap-2.5 p-3 rounded-xl bg-stone-50 border border-stone-200/70">
                     <Package size={18} className="text-primary shrink-0" />
@@ -443,21 +530,87 @@ export default function ProductDetails() {
                 </button>
               </div>
 
-              {/* Service Badges */}
-              {/* <div className="grid grid-cols-3 gap-2 pt-4 border-t border-border/60 text-center">
-                <div className="flex flex-col items-center gap-1 text-[0.72rem] text-stone-600">
-                  <Truck size={18} className="text-primary" />
-                  <span>Free Express Delivery</span>
+              {/* Share Product Options (WhatsApp & Copy Link) */}
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-200/80 gap-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-stone-700">
+                  <Share2 size={16} className="text-[#8B5E34]" />
+                  <span>Share this product:</span>
                 </div>
-                <div className="flex flex-col items-center gap-1 text-[0.72rem] text-stone-600">
-                  <ShieldCheck size={18} className="text-primary" />
-                  <span>1-Year Warranty</span>
+
+                <div className="flex items-center gap-2">
+                  {/* WhatsApp Share Button */}
+                  <button
+                    type="button"
+                    onClick={handleShareWhatsApp}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold transition-all shadow-sm active:scale-95 hover:scale-105"
+                    title="Share directly on WhatsApp"
+                  >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.311.045-.698.056-1.127-.082-.676-.217-1.547-.698-2.604-1.755-1.079-1.079-1.597-1.996-1.824-2.695-.147-.456-.011-.848.156-1.085.166-.237.369-.472.553-.655.184-.183.245-.268.369-.268.123 0 .245.011.369.011.139.011.272-.056.405.268.144.356.492 1.204.536 1.294.045.089.078.195.011.306-.067.111-.1.178-.2.295-.1.111-.211.245-.301.334-.1.089-.205.189-.089.389.117.2 1.05 1.706 2.378 2.261.278.117.494.078.683-.117.189-.195.808-.944 1.025-1.267.217-.322.433-.267.728-.156.295.111 1.867.878 2.189 1.039.322.161.539.245.617.378.078.133.078.778-.066 1.183zM12.004 2C6.48 2 2 6.48 2 12c0 1.965.571 3.797 1.558 5.342L2 22l4.814-1.517C8.286 21.439 10.076 22 12.004 22 17.524 22 22 17.52 22 12s-4.476-10-9.996-10z"/>
+                    </svg>
+                    <span>WhatsApp</span>
+                  </button>
+
+                  {/* Copy Link Button */}
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-stone-300 hover:border-stone-400 text-stone-700 text-xs font-semibold transition-all hover:bg-stone-100 active:scale-95"
+                    title="Copy Product Link"
+                  >
+                    {copySuccess ? (
+                      <>
+                        <Check size={14} className="text-emerald-600 stroke-[2.5]" />
+                        <span className="text-emerald-700 font-bold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={13} />
+                        <span>Copy Link</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <div className="flex flex-col items-center gap-1 text-[0.72rem] text-stone-600">
-                  <RotateCcw size={18} className="text-primary" />
-                  <span>7-Day Easy Returns</span>
+              </div>
+
+              {/* Real-World E-Commerce Policy Trust Bars (Delivery Policy & Return Policy) */}
+              <div className="pt-4 border-t border-stone-200/80 space-y-2.5">
+                {/* 1. Delivery Policy Bar */}
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-stone-50 border border-stone-200/80 text-xs text-stone-700">
+                  <div className="w-8 h-8 rounded-xl bg-[#8B5E34]/10 text-[#8B5E34] flex items-center justify-center shrink-0 mt-0.5">
+                    <Truck size={17} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-stone-900">Delivery Policy:</span>
+                      <span className="text-[0.65rem] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.2 rounded-full">
+                        Fast Shipping
+                      </span>
+                    </div>
+                    <p className="text-[0.72rem] text-stone-600 mt-0.5 leading-relaxed">
+                      {product.deliveryPolicy || 'Free Express Shipping within 2-3 business days with door delivery & live tracking.'}
+                    </p>
+                  </div>
                 </div>
-              </div> */}
+
+                {/* 2. Return & Replacement Policy Bar */}
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-stone-50 border border-stone-200/80 text-xs text-stone-700">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                    <RotateCcw size={17} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-stone-900">Return & Replacement Policy:</span>
+                      <span className="text-[0.65rem] bg-amber-100 text-amber-800 font-bold px-2 py-0.2 rounded-full">
+                        Buyer Protection
+                      </span>
+                    </div>
+                    <p className="text-[0.72rem] text-stone-600 mt-0.5 leading-relaxed">
+                      {product.returnPolicy || '7 Days Hassle-Free Replacement for transit damages, scratches, or manufacturing defects.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -493,6 +646,22 @@ export default function ProductDetails() {
                 <div className="flex justify-between p-3.5 bg-stone-50/50">
                   <span className="font-medium text-stone-500">Category</span>
                   <span className="font-bold text-stone-900 capitalize">{product.categoryId || 'Furniture'}</span>
+                </div>
+
+                {/* Warranty Row */}
+                <div className="flex justify-between p-3.5 bg-white">
+                  <span className="font-medium text-stone-500">Warranty</span>
+                  <span className={`font-bold ${product.hasWarranty && product.warranty && !product.warranty.toLowerCase().includes('no') ? 'text-amber-800' : 'text-stone-500'}`}>
+                    {product.hasWarranty && product.warranty && !product.warranty.toLowerCase().includes('no') ? `✓ ${product.warranty}` : 'No Warranty'}
+                  </span>
+                </div>
+
+                {/* Guarantee Row */}
+                <div className="flex justify-between p-3.5 bg-stone-50/50">
+                  <span className="font-medium text-stone-500">Guarantee</span>
+                  <span className={`font-bold ${product.hasGuarantee && product.guarantee && !product.guarantee.toLowerCase().includes('no') ? 'text-emerald-700' : 'text-stone-500'}`}>
+                    {product.hasGuarantee && product.guarantee && !product.guarantee.toLowerCase().includes('no') ? `✓ ${product.guarantee}` : 'No Guarantee'}
+                  </span>
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart, Star, Ruler, Layers, Check } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Ruler, Layers, Check, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -143,8 +143,22 @@ export default function ProductCard({ product }) {
                 {product.weight}
               </span>
             )}
+            {/* Warranty Pill */}
+            {product.hasWarranty && product.warranty && !product.warranty.toLowerCase().includes('no') && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-[#8B5E34] text-[0.7rem] font-bold border border-amber-200/80">
+                <ShieldCheck size={11} className="text-[#8B5E34]" />
+                {product.warranty}
+              </span>
+            )}
+            {/* Guarantee Pill */}
+            {product.hasGuarantee && product.guarantee && !product.guarantee.toLowerCase().includes('no') && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[0.7rem] font-bold border border-emerald-200/80">
+                <CheckCircle2 size={11} className="text-emerald-700" />
+                {product.guarantee}
+              </span>
+            )}
             {product.features && product.features.length > 0 && (
-              <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[0.7rem] font-medium border border-emerald-200/60 capitalize">
+              <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[0.7rem] font-medium border border-stone-200/60 capitalize">
                 {product.features[0]}
               </span>
             )}
