@@ -9,7 +9,8 @@ import {
   updateProfile, 
   signInWithPopup, 
   GoogleAuthProvider, 
-  signOut 
+  signOut,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { db } from '../config/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
@@ -121,6 +122,10 @@ export function AuthProvider({ children }) {
     await signOut(auth);
   };
 
+  const resetPassword = async (email) => {
+    return await sendPasswordResetEmail(auth, email);
+  };
+
   const value = {
     currentUser,
     loading,
@@ -131,6 +136,7 @@ export function AuthProvider({ children }) {
     loginWithEmail,
     registerWithEmail,
     loginWithGoogle,
+    resetPassword,
     logout
   };
 

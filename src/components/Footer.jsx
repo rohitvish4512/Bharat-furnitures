@@ -13,17 +13,26 @@ export default function Footer() {
         
         {/* 1. Brand Description */}
         <div>
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-[#D4A373] to-amber-200 shadow-md flex items-center justify-center shrink-0">
-              <img 
-                src="/logo.png" 
-                alt="Bharat Furnitures" 
-                className="w-full h-full object-cover rounded-full bg-[#f6ede3]"
-              />
-            </div>
-            <h2 className="font-heading font-extrabold text-2xl bg-gradient-to-r from-[#D4A373] via-[#E9EDC9] to-amber-200 bg-clip-text text-transparent">
-              Bharat Furnitures
-            </h2>
+          <div className="mb-4">
+            <Link to="/" className="inline-block group select-none">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 leading-none">
+                  <span className="font-heading font-black text-2xl sm:text-3xl tracking-tight bg-gradient-to-r from-[#D4A373] via-[#E9EDC9] to-amber-200 bg-clip-text text-transparent">
+                    Bharat
+                  </span>
+                  <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-[#D4A373] to-amber-200 shadow-md flex items-center justify-center shrink-0">
+                    <img 
+                      src="/logo.png" 
+                      alt="Bharat Furnitures" 
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                </div>
+                <span className="text-[0.68rem] font-bold tracking-[0.25em] uppercase text-stone-400 font-sans mt-1 pl-0.5">
+                  Furnitures
+                </span>
+              </div>
+            </Link>
           </div>
           <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
             Smart, durable, and space-saving furniture designed for modern homes, compact rooms, and everyday comfort.

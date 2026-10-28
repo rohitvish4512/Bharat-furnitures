@@ -687,12 +687,17 @@ const Admin = () => {
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div>
-            <h1 className="font-heading font-extrabold text-base text-[#8B5E34] leading-tight">
-              Bharat Furnitures
-            </h1>
-            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-stone-400 block">
-              Admin Portal
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5 leading-none">
+              <span className="font-heading font-black text-lg text-[#8B5E34]">
+                Bharat
+              </span>
+              <div className="w-6 h-6 rounded-full p-[1px] bg-gradient-to-tr from-[#8B5E34] to-[#D4A373] shadow-xs flex items-center justify-center shrink-0">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
+              </div>
+            </div>
+            <span className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-stone-500 font-sans mt-0.5 pl-0.5">
+              Furnitures
             </span>
           </div>
         </div>

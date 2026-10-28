@@ -5,19 +5,19 @@ import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { 
-  ShoppingBag, 
-  User, 
-  LogOut, 
-  ChevronDown, 
-  Heart, 
-  Package, 
-  Menu, 
-  X, 
-  Search, 
-  Phone, 
-  ChevronRight, 
-  Layers, 
+import {
+  ShoppingBag,
+  User,
+  LogOut,
+  ChevronDown,
+  Heart,
+  Package,
+  Menu,
+  X,
+  Search,
+  Phone,
+  ChevronRight,
+  Layers,
   Sparkles,
   Truck
 } from 'lucide-react';
@@ -89,7 +89,7 @@ export default function Navbar() {
     if (e) e.preventDefault();
     const query = mobileSearchQuery.trim();
     setIsMobileMenuOpen(false);
-    
+
     // Always navigate to /category/all with ?q= so the search searches ALL products across all categories
     if (query) {
       navigate(`/category/all?q=${encodeURIComponent(query)}`);
@@ -155,7 +155,7 @@ export default function Navbar() {
     <>
       <nav className="sticky top-0 z-[100] py-3 bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 flex items-center justify-between">
-          
+
           {/* Left section: 3-line hamburger menu toggle on Mobile + Brand Logo */}
           <div className="flex items-center gap-2.5 sm:gap-3">
             {/* 3-line Toggle Sidebar button (Mobile only) */}
@@ -168,26 +168,32 @@ export default function Navbar() {
               <Menu size={24} className="stroke-[2.2]" />
             </button>
 
-            {/* Brand Logo */}
-            <Link to="/" className="font-heading font-extrabold text-lg sm:text-2xl tracking-tight text-text-main flex items-center gap-2 group">
-              <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full p-[2px] bg-gradient-to-tr from-[#8B5E34] via-[#D4A373] to-[#FAEDCD] shadow-sm flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105">
-                <div className="w-full h-full rounded-full bg-[#f6ede3] flex items-center justify-center overflow-hidden shadow-inner">
-                  <img 
-                    src="/logo.png" 
-                    alt="Bharat Furnitures Logo" 
-                    className="w-full h-full object-cover rounded-full"
-                  />
+            {/* Brand Logo & Name */}
+            <Link to="/" className="group flex items-center gap-2.5 py-1 select-none">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5 leading-none">
+                  <span className="font-heading font-black text-xl sm:text-2xl tracking-tight bg-gradient-to-r from-primary via-[#8B5E34] to-secondary bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">
+                    Bharat
+                  </span>
+                  {/* Glowing Logo Badge right after Bharat */}
+                  <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full p-[1.5px] bg-gradient-to-tr from-[#8B5E34] via-[#D4A373] to-[#FAEDCD] shadow-sm flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110">
+                    <img
+                      src="/logo.png"
+                      alt="Bharat Furnitures Logo"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
                 </div>
+                <span className="text-[0.62rem] sm:text-[0.7rem] font-bold tracking-[0.22em] uppercase text-stone-500 font-sans mt-0.5 pl-0.5">
+                  Furnitures
+                </span>
               </div>
-              <span className="flex items-center">
-                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Bharat</span>Furnitures
-              </span>
             </Link>
           </div>
 
           {/* Action Controls */}
           <div className="flex items-center gap-1.5 sm:gap-4">
-            
+
             {/* Call support icon (Visible on mobile/desktop like reference site) */}
             <a
               href="tel:+919302530042"
@@ -329,7 +335,7 @@ export default function Navbar() {
 
         {/* Mobile Search Bar below Header (Reference UI layout) */}
         <div className="md:hidden px-3 pt-2.5 pb-1">
-          <form 
+          <form
             onSubmit={handleMobileSearch}
             className="flex items-center bg-[#F4ECE1] border border-[#E8DED1] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 rounded-full px-3.5 py-2 transition-all shadow-inner"
           >
@@ -372,7 +378,7 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[200] md:hidden">
           {/* Backdrop Overlay */}
-          <div 
+          <div
             onClick={() => setIsMobileMenuOpen(false)}
             className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in"
             aria-hidden="true"
@@ -380,20 +386,27 @@ export default function Navbar() {
 
           {/* Drawer Content */}
           <div className="fixed inset-y-0 left-0 w-[84%] max-w-[320px] bg-white shadow-2xl flex flex-col z-10 animate-slide-right transform transition-transform duration-300 overflow-hidden">
-            
+
             {/* Drawer Header with Logo and Close button */}
             <div className="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50/80">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 group select-none"
               >
-                <div className="w-8 h-8 rounded-full p-[1.5px] bg-gradient-to-tr from-[#8B5E34] to-[#D4A373]">
-                  <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5 leading-none">
+                    <span className="font-heading font-black text-lg tracking-tight bg-gradient-to-r from-primary to-[#8B5E34] bg-clip-text text-transparent">
+                      Bharat
+                    </span>
+                    <div className="w-6 h-6 rounded-full p-[1.5px] bg-gradient-to-tr from-[#8B5E34] to-[#D4A373] shadow-xs flex items-center justify-center shrink-0">
+                      <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
+                    </div>
+                  </div>
+                  <span className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-stone-500 font-sans mt-0.5 pl-0.5">
+                    Furnitures
+                  </span>
                 </div>
-                <span className="font-heading font-extrabold text-base tracking-tight text-text-main">
-                  <span className="text-primary">Bharat</span>Furnitures
-                </span>
               </Link>
 
               <button
@@ -408,7 +421,7 @@ export default function Navbar() {
 
             {/* Drawer Scrollable Body */}
             <div className="flex-1 overflow-y-auto px-4 py-3 divide-y divide-stone-100">
-              
+
               {/* SECTION 1: ALL CATEGORIES & CATEGORY LIST (Pehle categories) */}
               <div className="pb-4">
                 <p className="text-[0.68rem] uppercase tracking-wider font-extrabold text-[#8B5E34] mb-2 px-2 flex items-center gap-1.5">
@@ -421,11 +434,10 @@ export default function Navbar() {
                   <Link
                     to="/category/all"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold tracking-wider transition-all ${
-                      location.pathname === '/category/all'
-                        ? 'bg-primary/10 text-primary border-l-4 border-primary shadow-xs'
-                        : 'text-stone-800 hover:bg-stone-100'
-                    }`}
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold tracking-wider transition-all ${location.pathname === '/category/all'
+                      ? 'bg-primary/10 text-primary border-l-4 border-primary shadow-xs'
+                      : 'text-stone-800 hover:bg-stone-100'
+                      }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0 flex items-center justify-center shadow-xs">
@@ -445,17 +457,16 @@ export default function Navbar() {
                         key={cat.id}
                         to={`/category/${cat.id}`}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className={`flex items-center justify-between px-2.5 py-2 rounded-xl text-xs tracking-wider transition-all ${
-                          isActive
-                            ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary shadow-xs'
-                            : 'text-stone-700 font-medium hover:bg-stone-50 hover:text-stone-900'
-                        }`}
+                        className={`flex items-center justify-between px-2.5 py-2 rounded-xl text-xs tracking-wider transition-all ${isActive
+                          ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary shadow-xs'
+                          : 'text-stone-700 font-medium hover:bg-stone-50 hover:text-stone-900'
+                          }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0 shadow-xs">
-                            <img 
-                              src={thumbUrl} 
-                              alt={cat.name} 
+                            <img
+                              src={thumbUrl}
+                              alt={cat.name}
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';

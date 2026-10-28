@@ -186,7 +186,7 @@ export default function Checkout() {
       currency: 'INR',
       name: 'Bharat Furnitures',
       description: `Payment for ${totalItems} furniture item(s)`,
-      image: '/favicon.svg',
+      image: '/logo.png',
       prefill: {
         name: formData.fullName.trim(),
         email: formData.email.trim() || currentUser?.email || '',
