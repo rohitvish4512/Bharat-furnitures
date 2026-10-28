@@ -154,45 +154,45 @@ export default function Navbar() {
   return (
     <>
       <nav className="sticky top-0 z-[100] py-3 bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 relative flex items-center justify-between">
 
-          {/* Left section: 3-line hamburger menu toggle on Mobile + Brand Logo */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Brand & Logo Section: Stretches across all empty space */}
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 mr-2 sm:mr-4">
             {/* 3-line Toggle Sidebar button (Mobile only) */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-xl text-stone-800 hover:bg-stone-100 transition-colors flex items-center justify-center active:scale-95"
+              className="md:hidden p-1.5 -ml-1 rounded-xl text-stone-800 hover:bg-stone-100 transition-colors flex items-center justify-center active:scale-95 shrink-0"
               aria-label="Open Navigation Menu"
             >
-              <Menu size={24} className="stroke-[2.2]" />
+              <Menu size={27} className="stroke-[2.3]" />
             </button>
 
-            {/* Brand Logo & Name */}
-            <Link to="/" className="group flex items-center gap-2.5 py-1 select-none">
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5 leading-none">
-                  <span className="font-heading font-black text-xl sm:text-2xl tracking-tight bg-gradient-to-r from-primary via-[#8B5E34] to-secondary bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">
-                    Bharat
-                  </span>
-                  {/* Glowing Logo Badge right after Bharat */}
-                  <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full p-[1.5px] bg-gradient-to-tr from-[#8B5E34] via-[#D4A373] to-[#FAEDCD] shadow-sm flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110">
-                    <img
-                      src="/logo.png"
-                      alt="Bharat Furnitures Logo"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
-                </div>
-                <span className="text-[0.62rem] sm:text-[0.7rem] font-bold tracking-[0.22em] uppercase text-stone-500 font-sans mt-0.5 pl-0.5">
-                  Furnitures
+            {/* Brand Logo & Name: Bharat and Logo tightly together (no distance) and large */}
+            <Link to="/" className="group flex flex-col py-0.5 px-2 select-none">
+              {/* Row 1: BHARAT (Bigger) + LOGO right next to it with tight gap */}
+              <div className="flex items-center gap-2 sm:gap-2.5 leading-none">
+                <span className="font-heading font-black text-[1.85rem] sm:text-3xl tracking-tight bg-gradient-to-r from-primary via-[#8B5E34] to-secondary bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">
+                  Bharat
                 </span>
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black p-[2px] border border-amber-600/40 shadow-sm flex items-center justify-center shrink-0 overflow-hidden transition-transform duration-300 group-hover:scale-105">
+                  <img
+                    src="/logo.png"
+                    alt="Bharat Furnitures Logo"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
               </div>
+
+              {/* Row 2: FURNITURES cleanly below */}
+              <span className="text-[0.68rem] sm:text-[0.74rem] font-bold tracking-[0.24em] uppercase text-stone-500 font-sans mt-0.5 pl-0.5">
+                Furnitures
+              </span>
             </Link>
           </div>
 
-          {/* Action Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-4">
+          {/* Action Controls (Right side) */}
+          <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
 
             {/* Call support icon (Visible on mobile/desktop like reference site) */}
             <a
@@ -399,7 +399,7 @@ export default function Navbar() {
                     <span className="font-heading font-black text-lg tracking-tight bg-gradient-to-r from-primary to-[#8B5E34] bg-clip-text text-transparent">
                       Bharat
                     </span>
-                    <div className="w-6 h-6 rounded-full p-[1.5px] bg-gradient-to-tr from-[#8B5E34] to-[#D4A373] shadow-xs flex items-center justify-center shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-black p-[1.5px] border border-amber-600/40 shadow-xs flex items-center justify-center shrink-0 overflow-hidden">
                       <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
                     </div>
                   </div>

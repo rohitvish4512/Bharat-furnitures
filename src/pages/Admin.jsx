@@ -692,7 +692,7 @@ const Admin = () => {
               <span className="font-heading font-black text-lg text-[#8B5E34]">
                 Bharat
               </span>
-              <div className="w-6 h-6 rounded-full p-[1px] bg-gradient-to-tr from-[#8B5E34] to-[#D4A373] shadow-xs flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-full bg-black p-[1.5px] border border-amber-600/40 shadow-xs flex items-center justify-center shrink-0 overflow-hidden">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
               </div>
             </div>

@@ -20,7 +20,7 @@ export default function Footer() {
                   <span className="font-heading font-black text-2xl sm:text-3xl tracking-tight bg-gradient-to-r from-[#D4A373] via-[#E9EDC9] to-amber-200 bg-clip-text text-transparent">
                     Bharat
                   </span>
-                  <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-[#D4A373] to-amber-200 shadow-md flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-black p-[2px] border border-amber-600/40 shadow-md flex items-center justify-center shrink-0 overflow-hidden">
                     <img 
                       src="/logo.png" 
                       alt="Bharat Furnitures" 
