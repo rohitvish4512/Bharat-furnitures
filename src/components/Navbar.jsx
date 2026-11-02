@@ -9,7 +9,6 @@ import {
   ShoppingBag,
   User,
   LogOut,
-  ChevronDown,
   Heart,
   Package,
   Menu,
@@ -26,31 +25,41 @@ export default function Navbar() {
   const { currentUser, openAuthModal, logout } = useAuth();
   const { totalItems, openCart } = useCart();
   const { totalLiked, openWishlist } = useWishlist();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
-  const dropdownRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Sync mobile search input with URL search param
+  // Sync search input with URL search param
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const q = params.get('q');
     if (q !== null) {
-      setMobileSearchQuery(q);
+      setSearchQuery(q);
     }
   }, [location.search]);
 
-  // Close mobile menu on route change
+  // Close menus on route change
   useEffect(() => {
-    setIsMobileMenuOpen(false);
+    setIsSidebarOpen(false);
+    setIsSearchOpen(false);
   }, [location.pathname, location.search]);
 
-  // Prevent background scroll when mobile drawer is open
+  // Focus search input when search bar opens
   useEffect(() => {
-    if (isMobileMenuOpen) {
+    if (isSearchOpen && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isSearchOpen]);
+
+  // Prevent background scroll when sidebar drawer is open
+  useEffect(() => {
+    if (isSidebarOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -58,9 +67,9 @@ export default function Navbar() {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isMobileMenuOpen]);
+  }, [isSidebarOpen]);
 
-  // Fetch categories for the mobile drawer
+  // Fetch categories for the drawer
   useEffect(() => {
     const fetchCats = async () => {
       try {
@@ -74,23 +83,12 @@ export default function Navbar() {
     fetchCats();
   }, []);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleMobileSearch = (e) => {
+  const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
-    const query = mobileSearchQuery.trim();
-    setIsMobileMenuOpen(false);
+    const query = searchQuery.trim();
+    setIsSearchOpen(false);
+    setIsSidebarOpen(false);
 
-    // Always navigate to /category/all with ?q= so the search searches ALL products across all categories
     if (query) {
       navigate(`/category/all?q=${encodeURIComponent(query)}`);
     } else {
@@ -104,7 +102,6 @@ export default function Navbar() {
     }
   };
 
-  // Map category to a clear, recognizable thumbnail photo
   const getCategoryThumbnail = (cat) => {
     if (cat?.image) return cat.image;
     const id = (cat?.id || '').toLowerCase();
@@ -153,297 +150,337 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-[100] py-3 bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 relative flex items-center justify-between">
+      <nav className="sticky top-0 z-[100] py-3.5 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between">
 
-          {/* Brand & Logo Section: Stretches across all empty space */}
-          <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 mr-2 sm:mr-4">
-            {/* 3-line Toggle Sidebar button (Mobile only) */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-1.5 -ml-1 rounded-xl text-stone-800 hover:bg-stone-100 transition-colors flex items-center justify-center active:scale-95 shrink-0"
-              aria-label="Open Navigation Menu"
-            >
-              <Menu size={27} className="stroke-[2.3]" />
-            </button>
-
-            {/* Brand Logo & Name: Bharat and Logo tightly together (no distance) and large */}
-            <Link to="/" className="group flex flex-col py-0.5 px-2 select-none">
-              {/* Row 1: BHARAT (Bigger) + LOGO right next to it with tight gap */}
-              <div className="flex items-center gap-2 sm:gap-2.5 leading-none">
-                <span className="font-heading font-black text-[1.85rem] sm:text-3xl tracking-tight bg-gradient-to-r from-primary via-[#8B5E34] to-secondary bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">
-                  Bharat
-                </span>
-                <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black p-[2px] border border-amber-600/40 shadow-sm flex items-center justify-center shrink-0 overflow-hidden transition-transform duration-300 group-hover:scale-105">
-                  <img
-                    src="/logo.png"
-                    alt="Bharat Furnitures Logo"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                </div>
-              </div>
-
-              {/* Row 2: FURNITURES cleanly below */}
-              <span className="text-[0.68rem] sm:text-[0.74rem] font-bold tracking-[0.24em] uppercase text-stone-500 font-sans mt-0.5 pl-0.5">
-                Furnitures
+          {/* Left Side: Brand Logo & Name (Exact image replica: Bharat + Logo on top, FURNITURES perfectly stretched 100% across the full width) */}
+          <Link to="/" className="group inline-flex flex-col py-0.5 select-none w-fit">
+            <div className="flex items-center gap-2.5 sm:gap-3 leading-none w-full justify-between">
+              <span className="font-heading font-extrabold text-[2.1rem] sm:text-[2.4rem] tracking-tight text-[#8B5E34] group-hover:opacity-95 transition-opacity">
+                Bharat
               </span>
-            </Link>
-          </div>
+              <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden shadow-sm flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                <img
+                  src="/logo.png"
+                  alt="Bharat Furnitures Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            {/* FURNITURES stretched edge-to-edge from under 'B' to the right edge of the logo */}
+            <div className="flex items-center justify-between w-full text-[0.72rem] sm:text-[16px] font-bold uppercase text-stone-500 font-sans mt-0.5 select-none">
+              <span>F</span>
+              <span>u</span>
+              <span>r</span>
+              <span>n</span>
+              <span>i</span>
+              <span>t</span>
+              <span>u</span>
+              <span>r</span>
+              <span>e</span>
+              <span>s</span>
+            </div>
+          </Link>
 
-          {/* Action Controls (Right side) */}
-          <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
-
-            {/* Call support icon (Visible on mobile/desktop like reference site) */}
+          {/* Right Side: Clean Circular Pill Action Icons (Matched to Reference Image) */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+            {/* Phone Call Support Icon */}
             <a
               href="tel:+919302530042"
-              className="p-2 sm:p-2.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors flex items-center justify-center group"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#f4ece1]/80 hover:bg-[#ebdcc8] text-stone-700 hover:text-stone-900 transition-all flex items-center justify-center shadow-xs active:scale-95"
               title="Customer Support: +91 93025 30042"
-              aria-label="Contact Support"
+              aria-label="Call Support"
             >
-              <Phone size={19} className="group-hover:text-[#8B5E34] transition-colors" />
+              <Phone size={18} className="stroke-[2.2]" />
             </a>
 
-            {/* Liked / Wishlist Button with Badge (Desktop & Tablet) */}
+            {/* Search Icon (Opens Expandable Search Bar) */}
             <button
               type="button"
-              onClick={openWishlist}
-              className="hidden sm:flex relative p-2.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors items-center justify-center group"
-              aria-label="Liked Products"
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full transition-all flex items-center justify-center shadow-xs active:scale-95 ${isSearchOpen
+                ? 'bg-stone-900 text-white'
+                : 'bg-[#f4ece1]/80 hover:bg-[#ebdcc8] text-stone-700 hover:text-stone-900'
+                }`}
+              aria-label="Search Products"
             >
-              <Heart size={21} className={`transition-colors ${totalLiked > 0 ? 'fill-rose-500 text-rose-500' : 'group-hover:text-rose-500'}`} />
-              {totalLiked > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[0.68rem] font-bold flex items-center justify-center shadow-md animate-scale-in">
-                  {totalLiked}
-                </span>
-              )}
+              {isSearchOpen ? <X size={18} /> : <Search size={18} className="stroke-[2.2]" />}
             </button>
 
-            {/* Cart Button with Count Badge (Always visible on mobile & desktop) */}
+            {/* Hamburger Menu Icon (Opens Side Drawer with Cart, Profile & Categories) */}
             <button
               type="button"
-              onClick={openCart}
-              className="relative p-2 sm:p-2.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors flex items-center justify-center group"
-              aria-label="Shopping Cart"
+              onClick={() => setIsSidebarOpen(true)}
+              className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#f4ece1]/80 hover:bg-[#ebdcc8] text-stone-700 hover:text-stone-900 transition-all flex items-center justify-center shadow-xs active:scale-95"
+              aria-label="Open Navigation Menu"
             >
-              <ShoppingBag size={21} className="group-hover:text-[#8B5E34] transition-colors" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-[#8B5E34] text-white text-[0.68rem] font-bold flex items-center justify-center shadow-md animate-scale-in">
-                  {totalItems}
-                </span>
+              <Menu size={20} className="stroke-[2.3]" />
+              {/* Badge indicator on Menu if there are cart or liked items */}
+              {(totalItems > 0 || totalLiked > 0) && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#8B5E34] ring-2 ring-white" />
               )}
             </button>
-
-            {/* My Orders Direct Icon (Desktop only) */}
-            <Link
-              to="/orders"
-              className="hidden sm:flex relative p-2.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors items-center justify-center group"
-              title="My Orders & Tracking"
-              aria-label="My Orders"
-            >
-              <Package size={21} className="group-hover:text-[#8B5E34] transition-colors" />
-            </Link>
-
-            {/* User Authentication Menu / Profile Dropdown */}
-            {currentUser ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-1.5 p-1 sm:px-3 sm:py-1.5 rounded-full border border-stone-200 hover:border-stone-300 bg-stone-50 hover:bg-stone-100 transition-all text-xs font-semibold text-stone-800"
-                >
-                  <div className="w-7 h-7 rounded-full bg-[#8B5E34] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                    {getUserInitials()}
-                  </div>
-                  <span className="hidden sm:inline max-w-[100px] truncate">
-                    {getUserDisplayName()}
-                  </span>
-                  <ChevronDown size={14} className="text-stone-400" />
-                </button>
-
-                {/* Profile Dropdown */}
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-stone-200 py-2 z-50 animate-fade-in divide-y divide-stone-100">
-                    <div className="px-4 py-2.5">
-                      <p className="text-xs font-bold text-stone-900 truncate">
-                        {currentUser.displayName || 'Bharat Furnitures Member'}
-                      </p>
-                      <p className="text-[0.68rem] text-stone-500 truncate mt-0.5">
-                        {currentUser.email}
-                      </p>
-                    </div>
-
-                    <div className="py-1">
-                      <Link
-                        to="/orders"
-                        onClick={() => setDropdownOpen(false)}
-                        className="w-full px-4 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2.5 font-bold transition-colors"
-                      >
-                        <Package size={16} className="text-[#8B5E34]" />
-                        <span>My Orders & Tracking</span>
-                      </Link>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          openWishlist();
-                        }}
-                        className="w-full px-4 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center justify-between font-bold transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Heart size={16} className={totalLiked > 0 ? "fill-rose-500 text-rose-500" : "text-rose-500"} />
-                          <span>Wishlist & Liked Items</span>
-                        </div>
-                        {totalLiked > 0 && (
-                          <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600 text-[0.65rem] font-bold">
-                            {totalLiked}
-                          </span>
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          logout();
-                        }}
-                        className="w-full px-4 py-2 text-left text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 font-semibold transition-colors"
-                      >
-                        <LogOut size={15} />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => openAuthModal('manual')}
-                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-stone-900 hover:bg-black text-white text-xs font-bold transition-all shadow-sm active:scale-95"
-              >
-                <User size={13} />
-                <span>Sign In</span>
-              </button>
-            )}
-
           </div>
         </div>
 
-        {/* Mobile Search Bar below Header (Reference UI layout) */}
-        <div className="md:hidden px-3 pt-2.5 pb-1">
-          <form
-            onSubmit={handleMobileSearch}
-            className="flex items-center bg-[#F4ECE1] border border-[#E8DED1] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 rounded-full px-3.5 py-2 transition-all shadow-inner"
-          >
-            <input
-              type="text"
-              placeholder="SEARCH PRODUCTS..."
-              value={mobileSearchQuery}
-              onChange={(e) => setMobileSearchQuery(e.target.value)}
-              className="border-none bg-transparent outline-none w-full font-body text-xs text-text-main placeholder:text-text-muted/70 tracking-wide"
-            />
-            {mobileSearchQuery && (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileSearchQuery('');
-                  if (location.pathname.startsWith('/category/')) {
-                    const newParams = new URLSearchParams(location.search);
-                    newParams.delete('q');
-                    navigate(`${location.pathname}?${newParams.toString()}`);
-                  }
-                }}
-                className="text-stone-400 hover:text-stone-700 p-0.5 mr-1"
-                aria-label="Clear Search Input"
-              >
-                <X size={14} />
-              </button>
-            )}
-            <button
-              type="submit"
-              className="text-[#8B5E34] hover:text-primary transition-colors p-0.5"
-              aria-label="Submit Search"
+        {/* Expandable Search Bar Banner */}
+        {isSearchOpen && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-3 pb-1 animate-fade-in">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="relative flex items-center bg-[#f7f2ea] border border-stone-200/90 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 rounded-2xl px-4 py-2.5 transition-all shadow-inner"
             >
-              <Search size={16} />
-            </button>
-          </form>
-        </div>
+              <Search size={18} className="text-[#8B5E34] mr-3 shrink-0" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search sofas, beds, steel almirahs, tables..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-none bg-transparent outline-none w-full font-body text-sm text-stone-800 placeholder:text-stone-400"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-stone-400 hover:text-stone-700 p-1 mr-2 transition-colors"
+                  aria-label="Clear Search"
+                >
+                  <X size={16} />
+                </button>
+              )}
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition-all shadow-xs shrink-0"
+              >
+                Search
+              </button>
+            </form>
+          </div>
+        )}
       </nav>
 
-      {/* MOBILE SLIDE-OUT TOGGLE SIDEBAR (DRAWER) */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[200] md:hidden">
+      {/* SIDEBAR DRAWER (Slides out from right/left cleanly on both mobile & desktop) */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-[200]">
           {/* Backdrop Overlay */}
           <div
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in"
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-fade-in"
             aria-hidden="true"
           />
 
           {/* Drawer Content */}
-          <div className="fixed inset-y-0 left-0 w-[84%] max-w-[320px] bg-white shadow-2xl flex flex-col z-10 animate-slide-right transform transition-transform duration-300 overflow-hidden">
+          <div className="fixed inset-y-0 right-0 w-[88%] max-w-[360px] bg-white shadow-2xl flex flex-col z-10 animate-slide-left transform transition-transform duration-300 overflow-hidden">
 
             {/* Drawer Header with Logo and Close button */}
-            <div className="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50/80">
+            <div className="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50/90">
               <Link
                 to="/"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-2 group select-none"
+                onClick={() => setIsSidebarOpen(false)}
+                className="inline-flex flex-col group select-none w-fit"
               >
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5 leading-none">
-                    <span className="font-heading font-black text-lg tracking-tight bg-gradient-to-r from-primary to-[#8B5E34] bg-clip-text text-transparent">
-                      Bharat
-                    </span>
-                    <div className="w-6 h-6 rounded-full bg-black p-[1.5px] border border-amber-600/40 shadow-xs flex items-center justify-center shrink-0 overflow-hidden">
-                      <img src="/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
-                    </div>
-                  </div>
-                  <span className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-stone-500 font-sans mt-0.5 pl-0.5">
-                    Furnitures
+                <div className="flex items-center gap-2 leading-none w-full justify-between">
+                  <span className="font-heading font-extrabold text-xl tracking-tight text-[#8B5E34]">
+                    Bharat
                   </span>
+                  <div className="w-7 h-7 rounded-full overflow-hidden shadow-xs flex items-center justify-center shrink-0">
+                    <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between w-full text-[0.72rem] sm:text-[1.5rem] font-bold uppercase text-stone-500 font-sans mt-0.5 select-none">
+                  <span className='m-2'>F</span>
+                  <span>U</span>
+                  <span>R</span>
+                  <span>N</span>
+                  <span>I</span>
+                  <span>T</span>
+                  <span>U</span>
+                  <span>R</span>
+                  <span>E</span>
+                  <span>S</span>
                 </div>
               </Link>
 
               <button
                 type="button"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-1.5 rounded-full hover:bg-stone-200 text-stone-600 transition-colors"
+                onClick={() => setIsSidebarOpen(false)}
+                className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors"
                 aria-label="Close menu"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             {/* Drawer Scrollable Body */}
             <div className="flex-1 overflow-y-auto px-4 py-3 divide-y divide-stone-100">
 
-              {/* SECTION 1: ALL CATEGORIES & CATEGORY LIST (Pehle categories) */}
-              <div className="pb-4">
+              {/* USER / AUTH STATUS SECTION */}
+              <div className="pb-3.5">
+                {currentUser ? (
+                  <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-100/80 flex items-center justify-between">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-10 h-10 rounded-full bg-[#8B5E34] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+                        {getUserInitials()}
+                      </div>
+                      <div className="truncate">
+                        <p className="text-xs font-bold text-stone-900 truncate">
+                          {currentUser.displayName || 'Bharat Member'}
+                        </p>
+                        <p className="text-[0.68rem] text-stone-500 truncate mt-0.5">
+                          {currentUser.email}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSidebarOpen(false);
+                        logout();
+                      }}
+                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors shrink-0"
+                      title="Sign Out"
+                    >
+                      <LogOut size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSidebarOpen(false);
+                      openAuthModal('manual');
+                    }}
+                    className="w-full py-2.5 px-4 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
+                  >
+                    <User size={15} />
+                    <span>Sign In / Register</span>
+                  </button>
+                )}
+              </div>
+
+              {/* SECTION: CART, ORDERS, WISHLIST (Essential Actions) */}
+              <div className="py-3.5">
                 <p className="text-[0.68rem] uppercase tracking-wider font-extrabold text-[#8B5E34] mb-2 px-2 flex items-center gap-1.5">
-                  <Layers size={13} />
-                  <span>Explore Categories</span>
+                  <Sparkles size={13} />
+                  <span>Shopping & Activity</span>
                 </p>
 
                 <div className="flex flex-col gap-1.5">
-                  {/* ALL CATEGORIES LINK */}
+                  {/* Cart */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSidebarOpen(false);
+                      openCart();
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-800 hover:bg-stone-50 transition-colors group text-left border border-stone-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 group-hover:bg-emerald-100 transition-colors">
+                        <ShoppingBag size={16} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-stone-900">Shopping Cart</p>
+                        <p className="text-[0.65rem] text-stone-500">Items ready to checkout</p>
+                      </div>
+                    </div>
+                    {totalItems > 0 ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#8B5E34] text-white text-[0.68rem] font-bold shadow-xs">
+                        {totalItems} items
+                      </span>
+                    ) : (
+                      <ChevronRight size={15} className="text-stone-400" />
+                    )}
+                  </button>
+
+                  {/* Liked Items / Wishlist */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSidebarOpen(false);
+                      openWishlist();
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-800 hover:bg-stone-50 transition-colors group text-left border border-stone-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 group-hover:bg-rose-100 transition-colors">
+                        <Heart size={16} className={totalLiked > 0 ? "fill-rose-500" : ""} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-stone-900">Wishlist & Liked</p>
+                        <p className="text-[0.65rem] text-stone-500">Saved favorite furniture</p>
+                      </div>
+                    </div>
+                    {totalLiked > 0 ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-[0.68rem] font-bold shadow-xs">
+                        {totalLiked} items
+                      </span>
+                    ) : (
+                      <ChevronRight size={15} className="text-stone-400" />
+                    )}
+                  </button>
+
+                  {/* Orders */}
+                  <Link
+                    to="/orders"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-800 hover:bg-stone-50 transition-colors group border border-stone-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-[#8B5E34] group-hover:bg-amber-100 transition-colors">
+                        <Package size={16} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-stone-900">My Orders</p>
+                        <p className="text-[0.65rem] text-stone-500">View past purchase history</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={15} className="text-stone-400" />
+                  </Link>
+
+                  {/* Track Orders */}
+                  <Link
+                    to="/orders"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-800 hover:bg-stone-50 transition-colors group border border-stone-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition-colors">
+                        <Truck size={16} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-stone-900">Track Shipment</p>
+                        <p className="text-[0.65rem] text-stone-500">Live order delivery status</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={15} className="text-stone-400" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* SECTION: CATEGORIES */}
+              <div className="py-3.5">
+                <p className="text-[0.68rem] uppercase tracking-wider font-extrabold text-[#8B5E34] mb-2 px-2 flex items-center gap-1.5">
+                  <Layers size={13} />
+                  <span>Furniture Categories</span>
+                </p>
+
+                <div className="flex flex-col gap-1.5">
+                  {/* All Categories Link */}
                   <Link
                     to="/category/all"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => setIsSidebarOpen(false)}
                     className={`flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold tracking-wider transition-all ${location.pathname === '/category/all'
                       ? 'bg-primary/10 text-primary border-l-4 border-primary shadow-xs'
-                      : 'text-stone-800 hover:bg-stone-100'
+                      : 'text-stone-800 hover:bg-stone-50'
                       }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0 flex items-center justify-center shadow-xs">
                         <span className="text-sm">🪑</span>
                       </div>
-                      <span className="uppercase font-bold">ALL CATEGORIES</span>
+                      <span className="uppercase font-bold">ALL FURNITURE</span>
                     </div>
                     <ChevronRight size={15} className="text-stone-400" />
                   </Link>
@@ -456,7 +493,7 @@ export default function Navbar() {
                       <Link
                         key={cat.id}
                         to={`/category/${cat.id}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
+                        onClick={() => setIsSidebarOpen(false)}
                         className={`flex items-center justify-between px-2.5 py-2 rounded-xl text-xs tracking-wider transition-all ${isActive
                           ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary shadow-xs'
                           : 'text-stone-700 font-medium hover:bg-stone-50 hover:text-stone-900'
@@ -484,163 +521,23 @@ export default function Navbar() {
                 </div>
               </div>
 
-              {/* SECTION 2: USER ACTIVITY (Orders, Track Orders, Liked Items, Cart) */}
-              <div className="py-4">
-                <p className="text-[0.68rem] uppercase tracking-wider font-extrabold text-[#8B5E34] mb-2 px-2 flex items-center gap-1.5">
-                  <Sparkles size={13} />
-                  <span>My Activity & Account</span>
-                </p>
-
-                <div className="flex flex-col gap-1.5">
-                  {/* Orders */}
-                  <Link
-                    to="/orders"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-800 hover:bg-stone-100 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-[#8B5E34] group-hover:bg-amber-100 transition-colors">
-                        <Package size={16} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-stone-900">My Orders</p>
-                        <p className="text-[0.65rem] text-stone-500">View past purchase history</p>
-                      </div>
-                    </div>
-                    <ChevronRight size={15} className="text-stone-400" />
-                  </Link>
-
-                  {/* Track Orders */}
-                  <Link
-                    to="/orders"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-800 hover:bg-stone-100 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition-colors">
-                        <Truck size={16} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-stone-900">Track Orders</p>
-                        <p className="text-[0.65rem] text-stone-500">Live order shipment status</p>
-                      </div>
-                    </div>
-                    <ChevronRight size={15} className="text-stone-400" />
-                  </Link>
-
-                  {/* Liked Items */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      openWishlist();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-800 hover:bg-stone-100 transition-colors group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 group-hover:bg-rose-100 transition-colors">
-                        <Heart size={16} className={totalLiked > 0 ? "fill-rose-500" : ""} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-stone-900">Liked Items</p>
-                        <p className="text-[0.65rem] text-stone-500">Saved wishlist products</p>
-                      </div>
-                    </div>
-                    {totalLiked > 0 ? (
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[0.68rem] font-bold shadow-xs">
-                        {totalLiked}
-                      </span>
-                    ) : (
-                      <ChevronRight size={15} className="text-stone-400" />
-                    )}
-                  </button>
-
-                  {/* Cart */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      openCart();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-800 hover:bg-stone-100 transition-colors group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 group-hover:bg-emerald-100 transition-colors">
-                        <ShoppingBag size={16} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-stone-900">Shopping Cart</p>
-                        <p className="text-[0.65rem] text-stone-500">Check items in cart</p>
-                      </div>
-                    </div>
-                    {totalItems > 0 ? (
-                      <span className="px-2 py-0.5 rounded-full bg-[#8B5E34] text-white text-[0.68rem] font-bold shadow-xs">
-                        {totalItems}
-                      </span>
-                    ) : (
-                      <ChevronRight size={15} className="text-stone-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* SECTION 3: QUICK CONTACT & SUPPORT */}
-              <div className="pt-4">
+              {/* QUICK CONTACT SUPPORT */}
+              <div className="pt-3.5">
                 <a
                   href="tel:+919302530042"
-                  className="flex items-center gap-3 p-3 rounded-2xl bg-stone-100 hover:bg-stone-200/80 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-2xl bg-[#f7f2ea] hover:bg-[#ede3d5] transition-colors"
                 >
                   <div className="w-9 h-9 rounded-full bg-white shadow-xs flex items-center justify-center text-primary">
                     <Phone size={16} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-stone-900">Need Help or Custom Furniture?</p>
+                    <p className="text-xs font-bold text-stone-900">Custom Furniture Support</p>
                     <p className="text-[0.68rem] text-stone-600 font-medium">Call us: +91 93025 30042</p>
                   </div>
                 </a>
               </div>
 
             </div>
-
-            {/* Drawer Bottom Footer (Sign in / Sign out) */}
-            <div className="p-3 border-t border-stone-200 bg-stone-50/90">
-              {currentUser ? (
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="w-7 h-7 rounded-full bg-[#8B5E34] text-white flex items-center justify-center font-bold text-xs shrink-0">
-                      {getUserInitials()}
-                    </div>
-                    <p className="text-xs font-bold text-stone-800 truncate">
-                      {getUserDisplayName()}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      logout();
-                    }}
-                    className="flex items-center gap-1 text-xs text-rose-600 font-bold hover:bg-rose-50 px-2 py-1 rounded-lg transition-colors"
-                  >
-                    <LogOut size={14} />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    openAuthModal('manual');
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
-                >
-                  <User size={14} />
-                  <span>Sign In / Register</span>
-                </button>
-              )}
-            </div>
-
           </div>
         </div>
       )}
