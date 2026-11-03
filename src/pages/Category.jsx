@@ -75,16 +75,6 @@ export default function Category() {
         } catch (prodErr) {
           console.warn("Firestore products fetch failed, using fallback:", prodErr);
         }
-
-        // If Firestore had 0 products or failed, use fallback products
-        if (!prodData || prodData.length === 0) {
-          if (id && id !== 'all') {
-            prodData = fallbackProducts.filter(p => p.categoryId === id);
-          } else {
-            prodData = fallbackProducts;
-          }
-        }
-
         setProducts(prodData);
         setPriceLimit(null); // Reset filter when category changes
       } catch (error) {

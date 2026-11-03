@@ -133,7 +133,7 @@ export default function ProductDetails() {
           setProduct({ id: docSnap.id, ...docSnap.data() });
         } else {
           const fallback = fallbackProducts.find(p => p.id === id);
-          setProduct(fallback || null);
+          setProduct(null);
         }
       } catch (error) {
         console.error("Error fetching product details:", error);
