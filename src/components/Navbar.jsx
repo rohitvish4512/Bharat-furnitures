@@ -188,7 +188,7 @@ export default function Navbar() {
             <a
               href="tel:+917067753335"
               className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#f4ece1]/80 hover:bg-[#ebdcc8] text-stone-700 hover:text-stone-900 transition-all flex items-center justify-center shadow-xs active:scale-95"
-              title="Customer Support: +91 93025 30042"
+              title="Customer Support:70677 53335 "
               aria-label="Call Support"
             >
               <Phone size={18} className="stroke-[2.2]" />
@@ -532,7 +532,7 @@ export default function Navbar() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-stone-900">Custom Furniture Support</p>
-                    <p className="text-[0.68rem] text-stone-600 font-medium">Call us: +91 93025 30042</p>
+                    <p className="text-[0.68rem] text-stone-600 font-medium">Call us: +91 70677 53335</p>
                   </div>
                 </a>
               </div>
