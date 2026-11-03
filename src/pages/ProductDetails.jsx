@@ -5,7 +5,6 @@ import { db } from '../config/firebase';
 import Sidebar from '../components/Sidebar';
 import { products as fallbackProducts } from '../data/products';
 import {
-  Star,
   Heart,
   ShoppingCart,
   Check,
@@ -43,6 +42,31 @@ export default function ProductDetails() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const minSwipeDistance = 45;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe) {
+      setSelectedImgIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
+    }
+    if (isRightSwipe) {
+      setSelectedImgIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
+    }
+  };
 
   // WhatsApp and Social Share Handler
   const handleShareWhatsApp = () => {
@@ -239,12 +263,12 @@ export default function ProductDetails() {
           {/* Left Column: Image Stage & Exactly 4 Thumbnails */}
           <div className="lg:col-span-6 flex flex-col gap-4">
             {/* Big Main Stage */}
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#faf7f2] border border-border/80 group">
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#faf7f2] border border-border/80 group touch-pan-y select-none" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
               <img
                 src={galleryImages[selectedImgIndex] || galleryImages[0]}
                 alt={product.name}
                 onClick={() => setIsModalOpen(true)}
-                className="w-full h-full object-cover object-center cursor-zoom-in transition-transform duration-500 group-hover:scale-105"
+                className="w-full h-full object-contain p-2 cursor-zoom-in transition-transform duration-500 group-hover:scale-105"
               />
 
               {/* Click to Zoom Pill Indicator */}
@@ -257,30 +281,15 @@ export default function ProductDetails() {
                 <span>Click to zoom</span>
               </button>
 
-              {/* Prev / Next Arrows on Main Image (Visible on mobile touch, hover on desktop) */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedImgIndex((prev) => (prev === 0 ? 3 : prev - 1));
-                }}
-                className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center text-stone-700 hover:scale-110 active:scale-95 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
-                aria-label="Previous image"
-              >
-                <ChevronLeft size={18} />
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedImgIndex((prev) => (prev === 3 ? 0 : prev + 1));
-                }}
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center text-stone-700 hover:scale-110 active:scale-95 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
-                aria-label="Next image"
-              >
-                <ChevronRight size={18} />
-              </button>
+              {/* Slide Dots Indicator (Modern Swiper Style) */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 bg-black/25 backdrop-blur-xs px-2.5 py-1 rounded-full pointer-events-none">
+                {galleryImages.map((_, idx) => (
+                  <span
+                    key={idx}
+                    className={`transition-all duration-300 rounded-full ${selectedImgIndex === idx ? "w-5 h-1.5 bg-white shadow-sm" : "w-1.5 h-1.5 bg-white/60"}`}
+                  />
+                ))}
+              </div>
 
               {/* Badges Overlay */}
               <div className="absolute top-4 left-4 flex flex-col gap-2 items-start z-10 pointer-events-none">
@@ -364,16 +373,8 @@ export default function ProductDetails() {
           {/* Right Column: Pricing & Quick Actions */}
           <div className="lg:col-span-6 flex flex-col justify-between">
             <div>
-              {/* Rating & Reviews Bar */}
               <div className="flex items-center gap-2 mb-3">
-                <div className="inline-flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/80 text-amber-800 text-xs font-bold">
-                  <Star size={13} className="fill-amber-500 text-amber-500" />
-                  <span>{product.rating || '4.5'}</span>
-                </div>
-                <span className="text-xs text-text-muted font-medium">
-                  {product.reviews ? `(${product.reviews} customer reviews)` : '(Verified Product)'}
-                </span>
-                <span className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-200 ml-auto">
+                <span className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-200">
                   In Stock
                 </span>
               </div>
@@ -768,3 +769,10 @@ export default function ProductDetails() {
     </div>
   );
 }
+
+
+
+
+
+
+

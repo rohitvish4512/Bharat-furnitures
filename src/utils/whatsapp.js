@@ -101,3 +101,22 @@ export const sendWhatsAppUpdate = (order, targetStatus = null) => {
 
   window.open(whatsappUrl, '_blank');
 };
+
+
+/**
+ * Opens WhatsApp for customer order cancellation request to Bharat Furnitures support
+ */
+export const sendWhatsAppCancelRequest = (order) => {
+  const orderId = order.orderId || order.id || 'N/A';
+  const customerName = order.customer?.fullName || 'Customer';
+  const customerPhone = order.customer?.phone || '';
+  const amount = (order.totalAmount || 0).toLocaleString('en-IN');
+  const paymentMethod = order.paymentMethod || 'COD';
+  const itemsText = order.items?.map((i) => `• ${i.name} (Qty: ${i.quantity})`).join('\n') || '';
+
+  const cancelMessage = `Hello Bharat Furnitures Support Team, 🙏\n\nI want to request CANCELLATION for my order:\n\n━━━━━━━━━━━━━━━━━━━━\n🆔 Order ID: ${orderId}\n👤 Customer Name: ${customerName}\n📞 Phone: ${customerPhone}\n💰 Total Amount: ₹${amount}\n💳 Payment Mode: ${paymentMethod}\n\n🛋️ Ordered Item(s):\n${itemsText}\n━━━━━━━━━━━━━━━━━━━━\n\nReason for cancellation: [Please describe your reason here]\n\nPlease confirm the cancellation at the earliest. Thank you!`;
+
+  const supportPhone = '919302530042';
+  const whatsappUrl = `https://api.whatsapp.com/send?phone=${supportPhone}&text=${encodeURIComponent(cancelMessage)}`;
+  window.open(whatsappUrl, '_blank');
+};

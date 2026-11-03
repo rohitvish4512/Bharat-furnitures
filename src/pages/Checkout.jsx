@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -47,7 +47,23 @@ export default function Checkout() {
     landmark: ''
   });
 
+  
+  // Indian Mobile Number Validator (Starts with 6, 7, 8, or 9 and exactly 10 digits, not repeating identical digits like 0000000000)
+  const isValidIndianMobile = (phone) => {
+    const cleaned = (phone || '').replace(/\D/g, '');
+    if (!/^[6-9]\d{9}$/.test(cleaned)) {
+      return false;
+    }
+    // Disallow numbers with all identical repeating digits like 9999999999 or 8888888888
+    if (/^(\d)\1{9}$/.test(cleaned)) {
+      return false;
+    }
+    return true;
+  };
+
   const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cod'
+  const codHandlingFee = 20;
+  const finalPayableAmount = paymentMethod === 'cod' ? totalAmount + codHandlingFee : totalAmount;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -100,6 +116,15 @@ export default function Checkout() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
+        if (name === 'phone') {
+      const sanitizedPhone = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({
+        ...prev,
+        phone: sanitizedPhone
+      }));
+      return;
+    }
+
     if (name === 'pincode') {
       const sanitizedPin = value.replace(/\D/g, '').slice(0, 6);
       setFormData((prev) => ({
@@ -151,7 +176,9 @@ export default function Checkout() {
         dimensions: item.dimensions || ''
       })),
       totalItems,
-      totalAmount,
+      totalAmount: finalPayableAmount,
+      subtotal: totalAmount,
+      codFee: paymentMethod === 'cod' ? codHandlingFee : 0,
       totalSavings,
       paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Razorpay (Online Payment)',
       paymentStatus: paymentMethod === 'cod' ? 'Pending' : 'Paid',
@@ -182,7 +209,7 @@ export default function Checkout() {
 
     const options = {
       key: keyId,
-      amount: Math.round(totalAmount * 100), // Amount in paise
+      amount: Math.round(finalPayableAmount * 100), // Amount in paise
       currency: 'INR',
       name: 'Bharat Furnitures',
       description: `Payment for ${totalItems} furniture item(s)`,
@@ -248,8 +275,9 @@ export default function Checkout() {
       return;
     }
 
-    if (formData.phone.trim().length < 10) {
-      setError('Please enter a valid 10-digit mobile number.');
+    const cleanedPhone = formData.phone.trim().replace(/\D/g, '');
+    if (!isValidIndianMobile(cleanedPhone)) {
+      setError('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9. Fake numbers like 0000000000 are not allowed.');
       return;
     }
 
@@ -377,7 +405,7 @@ export default function Checkout() {
                       onChange={handleChange}
                       placeholder="10-digit mobile number"
                       maxLength={10}
-                      className="w-full pl-10 pr-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#8B5E34] focus:bg-white transition-colors"
+                      className={`w-full pl-10 pr-3.5 py-2.5 bg-stone-50 border rounded-xl text-xs sm:text-sm focus:outline-none transition-colors ${formData.phone.length === 10 && !isValidIndianMobile(formData.phone) ? "border-rose-400 bg-rose-50/20 text-rose-900 focus:border-rose-500" : "border-stone-200 focus:border-[#8B5E34] focus:bg-white"}`}
                     />
                   </div>
                 </div>
@@ -587,12 +615,13 @@ export default function Checkout() {
                     className="mt-1 accent-[#8B5E34]"
                   />
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Banknote size={18} className="text-[#8B5E34]" />
                       <span className="font-bold text-sm text-stone-900">Cash on Delivery (COD)</span>
+                      <span className="text-[0.68rem] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full ml-auto">+₹20 COD Handling Fee</span>
                     </div>
                     <p className="text-xs text-stone-500 mt-1">
-                      Pay via cash or UPI upon delivery at your doorstep.
+                      Pay via cash or UPI at delivery. <span className="text-[#8B5E34] font-medium">(Save ₹20 by paying online with Razorpay)</span>
                     </p>
                   </div>
                 </label>
@@ -663,11 +692,23 @@ export default function Checkout() {
                   </div>
                 )}
 
+                {paymentMethod === 'cod' && (
+                  <div className="flex justify-between text-stone-700 font-semibold">
+                    <span>COD Handling Charge</span>
+                    <span>+₹{codHandlingFee}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-base font-extrabold text-stone-900 pt-3 border-t border-stone-200">
                   <span>Total Amount</span>
-                  <span className="font-heading text-lg text-[#8B5E34]">
-                    ₹{totalAmount.toLocaleString('en-IN')}
-                  </span>
+                  <div className="text-right">
+                    <span className="font-heading text-lg text-[#8B5E34]">
+                      ₹{finalPayableAmount.toLocaleString('en-IN')}
+                    </span>
+                    {paymentMethod === 'cod' && (
+                      <p className="text-[0.68rem] text-emerald-700 font-bold">Save ₹20 with Online Payment</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -705,3 +746,12 @@ export default function Checkout() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+

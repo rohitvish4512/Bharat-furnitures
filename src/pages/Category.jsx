@@ -241,7 +241,6 @@ export default function Category() {
                     <option value="popular">Popularity</option>
                     <option value="price-low">Price: Low to High</option>
                     <option value="price-high">Price: High to Low</option>
-                    <option value="rating">Top Rated</option>
                   </select>
                   <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted" />
                 </div>
@@ -292,3 +291,4 @@ export default function Category() {
     </div>
   );
 }
+

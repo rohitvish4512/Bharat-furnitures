@@ -86,9 +86,9 @@ export default function Home() {
         >
           {/* Background decorative patterns */}
           <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-          
+
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-4 sm:p-7 md:p-10 gap-3 sm:gap-6">
-            
+
             {/* Left Offer Text */}
             <div className="w-full md:w-3/5 text-stone-900 flex flex-col items-start text-left">
               <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-black/15 text-white text-[0.65rem] sm:text-xs font-bold uppercase tracking-wider mb-1.5 sm:mb-2.5 backdrop-blur-xs">
@@ -127,9 +127,9 @@ export default function Home() {
 
               {/* Showcase Image */}
               <div className="relative w-full max-w-[280px] sm:max-w-[340px] aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-white/20 backdrop-blur-xs p-1.5 border border-white/40">
-                <img 
-                  src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=700&q=80" 
-                  alt="Solid Wood Bed Festive Sale" 
+                <img
+                  src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=700&q=80"
+                  alt="Solid Wood Bed Festive Sale"
                   className="w-full h-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
@@ -152,16 +152,16 @@ export default function Home() {
             {categories.map((cat) => {
               const imgUrl = getFallbackImage(cat.name, cat.id, cat.image);
               return (
-                <Link 
-                  key={cat.id} 
+                <Link
+                  key={cat.id}
                   to={`/category/${cat.id}`}
                   className="group flex flex-col items-center select-none"
                 >
                   {/* Big Square Box with Soft Background */}
                   <div className="w-full aspect-square rounded-xl sm:rounded-2xl bg-[#F8F9FA] hover:bg-[#F1F3F5] border border-stone-200/70 p-3 sm:p-5 flex items-center justify-center transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1 overflow-hidden relative">
-                    <img 
-                      src={imgUrl} 
-                      alt={cat.name} 
+                    <img
+                      src={imgUrl}
+                      alt={cat.name}
                       className="w-full h-full object-contain mix-blend-multiply drop-shadow-sm transition-transform duration-500 group-hover:scale-110"
                       onError={(e) => {
                         e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=700&q=80';
@@ -170,7 +170,7 @@ export default function Home() {
                   </div>
 
                   {/* Category Title */}
-                  <h3 className="mt-2.5 sm:mt-3 text-xs sm:text-sm md:text-base font-bold text-stone-700 group-hover:text-primary transition-colors text-center leading-tight">
+                  <h3 className="mt-2.5 sm:mt-3 text-sm sm:text-base md:text-lg font-bold text-stone-800 group-hover:text-primary transition-colors text-center leading-snug">
                     {cat.name}
                   </h3>
                 </Link>
@@ -218,3 +218,4 @@ export default function Home() {
     </div>
   );
 }
+

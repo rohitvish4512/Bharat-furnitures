@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+﻿import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -23,7 +23,7 @@ import {
   Mail,
   MessageSquare
 } from 'lucide-react';
-import { sendWhatsAppUpdate } from '../utils/whatsapp';
+import { sendWhatsAppUpdate, sendWhatsAppCancelRequest } from '../utils/whatsapp';
 
 const TRACKING_STEPS = [
   { 
@@ -548,6 +548,29 @@ export default function MyOrders() {
               </div>
             </div>
 
+            {/* Cancel Order Option: Only available for 'Placed', 'Confirmed', or 'Shipped' */}
+            {['placed', 'confirmed', 'shipped'].includes((selectedOrderForModal.orderStatus || 'placed').toLowerCase()) && (
+              <div className="mb-5 p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle size={18} className="text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-rose-900">Need to Cancel this Order?</p>
+                    <p className="text-[0.7rem] text-rose-700 mt-0.5">
+                      Cancellation is allowed while the order is in Placed, Confirmed, or Shipped state.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => sendWhatsAppCancelRequest(selectedOrderForModal)}
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  <MessageSquare size={14} />
+                  <span>Cancel Order via WhatsApp</span>
+                </button>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-stone-100">
               <button
@@ -583,3 +606,5 @@ export default function MyOrders() {
     </div>
   );
 }
+
+

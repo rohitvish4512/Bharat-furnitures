@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart, Star, Ruler, Layers, Check, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Heart, ShoppingCart, Ruler, Layers, Check, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -104,19 +104,6 @@ export default function ProductCard({ product }) {
       {/* Product Details Section */}
       <div className="p-4 flex flex-col flex-1 justify-between gap-3">
         <div>
-          {/* Rating & Reviews Header */}
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <div className="inline-flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60 text-amber-700 text-xs font-bold">
-              <Star size={12} className="fill-amber-500 text-amber-500" />
-              <span>{product.rating || '4.5'}</span>
-            </div>
-            {product.reviews && (
-              <span className="text-[0.72rem] text-stone-500 font-medium">
-                ({product.reviews} reviews)
-              </span>
-            )}
-          </div>
-
           {/* Product Name */}
           <Link to={`/product/${product.id}`} className="block">
             <h3 className="font-heading font-bold text-base text-stone-900 group-hover:text-[#8B5E34] transition-colors line-clamp-1 leading-snug">
@@ -212,3 +199,5 @@ export default function ProductCard({ product }) {
     </div>
   );
 }
+
+
