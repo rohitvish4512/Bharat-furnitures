@@ -201,9 +201,9 @@ export default function ProductDetails() {
     <div className="flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-background">
       <Sidebar />
 
-      <main className="flex-1 p-6 md:p-10 lg:p-12 overflow-y-auto">
+      <main className="flex-1 p-0 md:p-10 lg:p-12 overflow-y-auto pb-24 md:pb-12">
         {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs text-text-muted mb-6">
+        <nav className="flex items-center gap-2 text-xs text-text-muted mb-3 sm:mb-6 px-4 md:px-0 pt-3 md:pt-0">
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>
           <ChevronRight size={12} />
           {product.categoryId && (
@@ -218,7 +218,7 @@ export default function ProductDetails() {
         </nav>
 
         {/* Product Hero Section (Gallery + Purchase Info) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 bg-white rounded-3xl p-6 sm:p-8 md:p-10 border border-border shadow-sm mb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 bg-white rounded-none md:rounded-3xl p-0 md:p-10 border-0 md:border md:border-border shadow-none md:shadow-sm mb-6 sm:mb-10">
 
           {/* Left Column: Direct Inline Pepperfry Image Gallery & Zoom */}
           <div className="lg:col-span-6">
@@ -235,7 +235,7 @@ export default function ProductDetails() {
           </div>
 
           {/* Right Column: Pricing & Quick Actions */}
-          <div className="lg:col-span-6 flex flex-col justify-between">
+          <div className="lg:col-span-6 flex flex-col justify-between px-4 md:px-0 pb-4 md:pb-0">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-200">
@@ -482,7 +482,7 @@ export default function ProductDetails() {
         </div>
 
         {/* Detailed Product Specifications & Additional Information */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 md:p-10 border border-border shadow-sm">
+        <div className="bg-white rounded-none md:rounded-3xl p-4 sm:p-8 md:p-10 border-t md:border border-border shadow-none md:shadow-sm mx-0 md:mx-0">
           <h2 className="font-heading font-bold text-xl sm:text-2xl text-stone-900 mb-6 pb-4 border-b border-border">
             Additional Information & Specifications
           </h2>

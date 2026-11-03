@@ -3,7 +3,7 @@ import { MessageCircle, Package, ArrowUpRight } from 'lucide-react';
 
 export default function Footer() {
   // WhatsApp Support Number & default message (Aap ise change kar sakte hain)
-  const whatsappNumber = "919302530042"; // Replace with your official business WhatsApp number
+  const whatsappNumber = "917067753335"; // Replace with your official business WhatsApp number
   const whatsappMessage = encodeURIComponent("Hello Bharat Furnitures! I need assistance with furniture products / order inquiry.");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 

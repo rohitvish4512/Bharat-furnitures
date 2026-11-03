@@ -186,7 +186,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
             {/* Phone Call Support Icon */}
             <a
-              href="tel:+919302530042"
+              href="tel:+917067753335"
               className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#f4ece1]/80 hover:bg-[#ebdcc8] text-stone-700 hover:text-stone-900 transition-all flex items-center justify-center shadow-xs active:scale-95"
               title="Customer Support: +91 93025 30042"
               aria-label="Call Support"
@@ -524,7 +524,7 @@ export default function Navbar() {
               {/* QUICK CONTACT SUPPORT */}
               <div className="pt-3.5">
                 <a
-                  href="tel:+919302530042"
+                  href="tel:+917067753335"
                   className="flex items-center gap-3 p-3 rounded-2xl bg-[#f7f2ea] hover:bg-[#ede3d5] transition-colors"
                 >
                   <div className="w-9 h-9 rounded-full bg-white shadow-xs flex items-center justify-center text-primary">
