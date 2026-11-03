@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Sidebar from '../components/Sidebar';
+import PepperfryImageGallery from '../components/PepperfryImageGallery';
 import { products as fallbackProducts } from '../data/products';
 import {
   Heart,
@@ -39,35 +40,8 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImgIndex, setSelectedImgIndex] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
-  const minSwipeDistance = 45;
-
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    if (isLeftSwipe) {
-      setSelectedImgIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
-    }
-    if (isRightSwipe) {
-      setSelectedImgIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
-    }
-  };
-
   // WhatsApp and Social Share Handler
   const handleShareWhatsApp = () => {
     if (!product) return;
@@ -107,21 +81,7 @@ export default function ProductDetails() {
     }
   };
 
-  // Keyboard navigation for image modal
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!isModalOpen) return;
-      if (e.key === 'Escape') setIsModalOpen(false);
-      if (e.key === 'ArrowLeft') {
-        setSelectedImgIndex((prev) => (prev === 0 ? 3 : prev - 1));
-      }
-      if (e.key === 'ArrowRight') {
-        setSelectedImgIndex((prev) => (prev === 3 ? 0 : prev + 1));
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isModalOpen]);
+ 
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -260,114 +220,18 @@ export default function ProductDetails() {
         {/* Product Hero Section (Gallery + Purchase Info) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 bg-white rounded-3xl p-6 sm:p-8 md:p-10 border border-border shadow-sm mb-10">
 
-          {/* Left Column: Image Stage & Exactly 4 Thumbnails */}
-          <div className="lg:col-span-6 flex flex-col gap-4">
-            {/* Big Main Stage */}
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#faf7f2] border border-border/80 group touch-pan-y select-none" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-              <img
-                src={galleryImages[selectedImgIndex] || galleryImages[0]}
-                alt={product.name}
-                onClick={() => setIsModalOpen(true)}
-                className="w-full h-full object-contain p-2 cursor-zoom-in transition-transform duration-500 group-hover:scale-105"
-              />
-
-              {/* Click to Zoom Pill Indicator */}
-              <button 
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="absolute bottom-4 right-4 bg-white/90 hover:bg-white text-stone-700 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md flex items-center gap-1.5 backdrop-blur-sm transition-all hover:scale-105"
-              >
-                <ZoomIn size={14} />
-                <span>Click to zoom</span>
-              </button>
-
-              {/* Slide Dots Indicator (Modern Swiper Style) */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 bg-black/25 backdrop-blur-xs px-2.5 py-1 rounded-full pointer-events-none">
-                {galleryImages.map((_, idx) => (
-                  <span
-                    key={idx}
-                    className={`transition-all duration-300 rounded-full ${selectedImgIndex === idx ? "w-5 h-1.5 bg-white shadow-sm" : "w-1.5 h-1.5 bg-white/60"}`}
-                  />
-                ))}
-              </div>
-
-              {/* Badges Overlay */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2 items-start z-10 pointer-events-none">
-                {discount > 0 && (
-                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-600 text-white shadow-md">
-                    {discount}% OFF
-                  </span>
-                )}
-                {product.badges?.map(badge => (
-                  <span key={badge} className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#8B5E34] text-white shadow-md capitalize">
-                    {badge}
-                  </span>
-                ))}
-              </div>
-
-              {/* Actions Overlay: Share & Wishlist */}
-              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-                {/* Share Button on Image */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleShareWhatsApp();
-                  }}
-                  className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all text-stone-700 hover:text-[#25D366] hover:bg-white"
-                  title="Share on WhatsApp"
-                  aria-label="Share on WhatsApp"
-                >
-                  <Share2 size={18} />
-                </button>
-
-                {/* Wishlist Button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleWishlist(product);
-                  }}
-                  className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all text-stone-600 hover:text-rose-500"
-                  aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
-                >
-                  <Heart size={20} className={liked ? "fill-rose-500 text-rose-500" : "transition-colors"} />
-                </button>
-              </div>
-
-              {/* Stock Indicator */}
-              {product.stock && Number(product.stock) <= 5 && (
-                <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500 text-white text-xs font-semibold shadow-md">
-                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                    Only {product.stock} items left in stock
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Exactly 4 Thumbnails (Matching Screenshot 1) */}
-            <div className="grid grid-cols-4 gap-3">
-              {galleryImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setSelectedImgIndex(idx)}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all group/thumb ${
-                    selectedImgIndex === idx 
-                      ? 'border-primary ring-2 ring-primary/30 shadow-md scale-[1.02]' 
-                      : 'border-border/80 opacity-75 hover:opacity-100 hover:border-stone-400'
-                  }`}
-                >
-                  <img 
-                    src={img} 
-                    alt={`${product.name} thumbnail ${idx + 1}`} 
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover/thumb:scale-110" 
-                  />
-                  <div className={`absolute inset-0 bg-primary/10 transition-opacity ${selectedImgIndex === idx ? 'opacity-100' : 'opacity-0'}`} />
-                </button>
-              ))}
-            </div>
+          {/* Left Column: Direct Inline Pepperfry Image Gallery & Zoom */}
+          <div className="lg:col-span-6">
+            <PepperfryImageGallery
+              images={galleryImages}
+              productName={product.name}
+              discount={discount}
+              badges={product.badges}
+              stock={product.stock}
+              liked={liked}
+              onToggleWishlist={() => toggleWishlist(product)}
+              onShare={handleShareWhatsApp}
+            />
           </div>
 
           {/* Right Column: Pricing & Quick Actions */}
@@ -696,76 +560,7 @@ export default function ProductDetails() {
         </div>
 
         {/* Fullscreen Image Lightbox Zoom Modal (Matches Screenshot 2) */}
-        {isModalOpen && (
-          <div 
-            className="fixed inset-0 z-[1000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 md:p-8 animate-fade-in"
-            onClick={() => setIsModalOpen(false)}
-          >
-            <div 
-              className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Circular White Close Button matching Screenshot 2 */}
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-3 right-3 sm:-top-5 sm:-right-5 w-11 h-11 rounded-full bg-white text-stone-800 flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 z-40 border border-stone-200"
-                aria-label="Close modal"
-              >
-                <X size={20} className="stroke-[2.5]" />
-              </button>
-
-              {/* Prev Navigation Arrow */}
-              <button
-                type="button"
-                onClick={() => setSelectedImgIndex((prev) => (prev === 0 ? 3 : prev - 1))}
-                className="absolute left-2 sm:-left-14 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/95 text-stone-800 shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-30"
-                aria-label="Previous image"
-              >
-                <ChevronLeft size={24} />
-              </button>
-
-              {/* Next Navigation Arrow */}
-              <button
-                type="button"
-                onClick={() => setSelectedImgIndex((prev) => (prev === 3 ? 0 : prev + 1))}
-                className="absolute right-2 sm:-right-14 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/95 text-stone-800 shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-30"
-                aria-label="Next image"
-              >
-                <ChevronRight size={24} />
-              </button>
-
-              {/* Big Centered High-Res Image Display */}
-              <div className="w-full max-h-[75vh] flex items-center justify-center bg-white rounded-2xl overflow-hidden shadow-2xl p-2 sm:p-4">
-                <img
-                  src={galleryImages[selectedImgIndex]}
-                  alt={`${product.name} zoomed`}
-                  className="max-h-[70vh] max-w-full w-auto h-auto object-contain rounded-xl"
-                />
-              </div>
-
-              {/* 4 Bottom Thumbnails in Modal */}
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4">
-                {galleryImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSelectedImgIndex(idx)}
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border-2 transition-all ${
-                      selectedImgIndex === idx 
-                        ? 'border-white ring-2 ring-primary scale-105 sm:scale-110 shadow-lg' 
-                        : 'border-white/40 opacity-60 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-      </main>
+        </main>
     </div>
   );
 }
