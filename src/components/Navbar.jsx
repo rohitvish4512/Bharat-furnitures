@@ -15,6 +15,7 @@ import {
   X,
   Search,
   Phone,
+  MapPin,
   ChevronRight,
   Layers,
   Sparkles,
@@ -108,7 +109,7 @@ export default function Navbar() {
     const name = (cat?.name || '').toLowerCase();
 
     if (id.includes('study') || name.includes('study') || name.includes('laptop')) {
-      return 'https://images.unsplash.com/photo-1595515106969-1ce29566ff1c?auto=format&fit=crop&w=120&q=80';
+      return '/study-table-category.jpg';
     }
     if (id.includes('chair') || name.includes('chair')) {
       return 'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=120&q=80';
@@ -184,6 +185,19 @@ export default function Navbar() {
 
           {/* Right Side: Clean Circular Pill Action Icons (Matched to Reference Image) */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+            
+            {/* Store Location Map Icon */}
+            <a
+              href="https://maps.app.goo.gl/TBFTMMWHbgGQuT2L9"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#f4ece1]/80 hover:bg-[#ebdcc8] text-stone-700 hover:text-[#8B5E34] transition-all flex items-center justify-center shadow-xs active:scale-95"
+              title="Visit Our Offline Store in Indore"
+              aria-label="Visit Offline Store on Google Maps"
+            >
+              <MapPin size={18} className="stroke-[2.2]" />
+            </a>
+
             {/* Phone Call Support Icon */}
             <a
               href="tel:+917067753335"

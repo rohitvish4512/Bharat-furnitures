@@ -162,7 +162,7 @@ export const products = [
 ];
 
 export const categories = [
-  { id: "study-laptop-tables", name: "Study & Laptop Tables", description: "Fold. Study. Work Anywhere.", icon: "📚", isActive: true, createdAt: new Date().toISOString() },
+  { id: "study-laptop-tables", name: "Study & Laptop Tables", image: "/study-table-category.jpg", description: "Fold. Study. Work Anywhere.", icon: "📚", isActive: true, createdAt: new Date().toISOString() },
   { id: "storage-racks", name: "Storage Racks", description: "Store More. Stay Organized.", icon: "🗄️", isActive: true, createdAt: new Date().toISOString() },
   { id: "chairs", name: "Study & Utility Chairs", description: "Comfort for Every Task.", icon: "🪑", isActive: true, createdAt: new Date().toISOString() },
   { id: "computer-desks", name: "Computer & Work Desks", description: "More Space. Better Work.", icon: "💻", isActive: true, createdAt: new Date().toISOString() },

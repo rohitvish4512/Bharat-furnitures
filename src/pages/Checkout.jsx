@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -151,49 +151,80 @@ export default function Checkout() {
   const saveOrderToFirestore = async (paymentDetails = null) => {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const generatedOrderId = `BF-${new Date().getFullYear()}-${randomSuffix}`;
+    const resolvedUserId = currentUser?.uid || (formData.phone ? `guest_${formData.phone.replace(/\D/g, '')}` : `guest_${Date.now()}`);
 
     const orderData = {
       orderId: generatedOrderId,
-      userId: currentUser.uid,
+      userId: resolvedUserId,
       customer: {
-        fullName: formData.fullName.trim(),
-        phone: formData.phone.trim(),
-        email: formData.email || currentUser.email,
-        address: formData.address.trim(),
-        city: formData.city.trim(),
-        state: formData.state.trim() || 'India',
-        pincode: formData.pincode.trim(),
-        landmark: formData.landmark.trim() || ''
+        fullName: (formData.fullName || '').trim() || 'Valued Customer',
+        phone: (formData.phone || '').trim(),
+        email: (formData.email || '').trim() || currentUser?.email || '',
+        address: (formData.address || '').trim(),
+        city: (formData.city || '').trim(),
+        state: (formData.state || '').trim() || 'Madhya Pradesh',
+        pincode: (formData.pincode || '').trim(),
+        landmark: (formData.landmark || '').trim()
       },
-      items: cart.map((item) => ({
-        productId: item.id,
-        name: item.name,
-        price: item.price,
-        originalPrice: item.originalPrice || item.price,
-        image: item.image,
-        quantity: item.quantity,
+      items: (cart || []).map((item, idx) => ({
+        productId: String(item.id || item.productId || `item_${idx}`),
+        name: item.name || 'Furniture Item',
+        price: Number(item.price) || 0,
+        originalPrice: Number(item.originalPrice) || Number(item.price) || 0,
+        image: item.image || (Array.isArray(item.images) && item.images[0]) || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',
+        quantity: Number(item.quantity) || 1,
         material: item.material || '',
         dimensions: item.dimensions || ''
       })),
-      totalItems,
-      totalAmount: finalPayableAmount,
-      subtotal: totalAmount,
+      totalItems: Number(totalItems) || 1,
+      totalAmount: Number(finalPayableAmount) || 0,
+      subtotal: Number(totalAmount) || 0,
       codFee: paymentMethod === 'cod' ? codHandlingFee : 0,
-      totalSavings,
+      totalSavings: Number(totalSavings) || 0,
       paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Razorpay (Online Payment)',
       paymentStatus: paymentMethod === 'cod' ? 'Pending' : 'Paid',
-      razorpayPaymentId: paymentDetails?.razorpay_payment_id || null,
-      razorpayOrderId: paymentDetails?.razorpay_order_id || null,
-      razorpaySignature: paymentDetails?.razorpay_signature || null,
+      razorpayPaymentId: paymentDetails?.razorpay_payment_id || '',
+      razorpayOrderId: paymentDetails?.razorpay_order_id || '',
+      razorpaySignature: paymentDetails?.razorpay_signature || '',
       orderStatus: 'Placed',
-      estimatedDeliveryDate: formattedDeliveryDate,
-      createdAt: serverTimestamp(),
+      estimatedDeliveryDate: formattedDeliveryDate || '',
       createdAtFormatted: new Date().toLocaleString('en-IN')
     };
 
-    const docRef = await addDoc(collection(db, 'orders'), orderData);
-    clearCart();
-    navigate(`/order-success/${docRef.id}`, { state: { orderData } });
+    // Deep clean undefined fields so Firestore addDoc never throws invalid field error
+    const cleanOrderData = JSON.parse(JSON.stringify(orderData));
+    cleanOrderData.createdAt = serverTimestamp();
+
+    // Emergency backup to localStorage
+    try {
+      localStorage.setItem('bf_last_placed_order', JSON.stringify({
+        ...cleanOrderData,
+        createdAt: new Date().toISOString()
+      }));
+    } catch (lsErr) {
+      console.warn('LocalStorage backup note:', lsErr);
+    }
+
+    try {
+      const docRef = await addDoc(collection(db, 'orders'), cleanOrderData);
+      clearCart();
+      navigate(`/order-success/${docRef.id}`, { state: { orderData: { ...cleanOrderData, id: docRef.id } } });
+      return docRef.id;
+    } catch (dbErr) {
+      console.error('Firestore save failed:', dbErr);
+      // If payment was already received via Razorpay, do not strand the customer on error page
+      if (paymentDetails?.razorpay_payment_id) {
+        clearCart();
+        const fallbackId = `BF-PAY-${Date.now()}`;
+        navigate(`/order-success/${fallbackId}`, { 
+          state: { 
+            orderData: { ...cleanOrderData, id: fallbackId, isOfflineBackup: true } 
+          } 
+        });
+        return fallbackId;
+      }
+      throw dbErr;
+    }
   };
 
   // Handle Razorpay Checkout Modal

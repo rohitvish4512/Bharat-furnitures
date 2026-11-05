@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../config/firebase';
-import { collection, addDoc, updateDoc, doc, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { categories as fallbackCategories } from '../data/products';
 import { 
   Package, 
@@ -114,6 +114,7 @@ const Admin = () => {
 
   // Orders Management States
   const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
@@ -163,6 +164,15 @@ const Admin = () => {
     setIsAdminLoggedIn(false);
   };
 
+  const parseOrderTimestamp = (createdAt) => {
+    if (!createdAt) return 0;
+    if (typeof createdAt.toMillis === 'function') return createdAt.toMillis();
+    if (createdAt.seconds) return createdAt.seconds * 1000;
+    if (createdAt instanceof Date) return createdAt.getTime();
+    const parsed = Date.parse(createdAt);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const fetchInitialData = async () => {
     setLoading(true);
     await Promise.all([fetchProductsAndCategories(), fetchOrders()]);
@@ -171,20 +181,51 @@ const Admin = () => {
 
   const fetchOrders = async () => {
     try {
+      setOrdersLoading(true);
       const orderSnap = await getDocs(collection(db, 'orders'));
       const orderList = orderSnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => {
-          const timeA = a.createdAt?.seconds || 0;
-          const timeB = b.createdAt?.seconds || 0;
+          const timeA = parseOrderTimestamp(a.createdAt);
+          const timeB = parseOrderTimestamp(b.createdAt);
           return timeB - timeA;
         });
       setOrders(orderList);
     } catch (err) {
       console.error(err);
       setMessage('Failed to load orders: ' + err.message);
+    } finally {
+      setOrdersLoading(false);
     }
   };
+
+  // Real-time listener for orders whenever Admin is logged in
+  useEffect(() => {
+    if (!isAdminLoggedIn) return;
+
+    const ordersCol = collection(db, 'orders');
+    const unsubscribe = onSnapshot(ordersCol, (snapshot) => {
+      const orderList = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const timeA = parseOrderTimestamp(a.createdAt);
+          const timeB = parseOrderTimestamp(b.createdAt);
+          return timeB - timeA;
+        });
+      setOrders(orderList);
+    }, (err) => {
+      console.error('Real-time orders sync note:', err);
+    });
+
+    return () => unsubscribe();
+  }, [isAdminLoggedIn]);
+
+  // Re-fetch orders whenever activeTab switches to 'orders'
+  useEffect(() => {
+    if (isAdminLoggedIn && activeTab === 'orders') {
+      fetchOrders();
+    }
+  }, [activeTab, isAdminLoggedIn]);
 
   const fetchProductsAndCategories = async () => {
     try {
@@ -1646,19 +1687,33 @@ const Admin = () => {
                 </p>
               </div>
 
-              {/* Order Search Bar */}
-              <div className="flex items-center bg-white border border-stone-200 rounded-2xl px-4 py-2.5 max-w-sm shadow-xs">
-                <Search size={16} className="text-stone-400 mr-2 shrink-0" />
-                <input
-                  type="text"
-                  value={orderSearchQuery}
-                  onChange={(e) => setOrderSearchQuery(e.target.value)}
-                  placeholder="Search by Order ID, Name, Phone..."
-                  className="w-full bg-transparent text-xs text-stone-800 outline-none placeholder:text-stone-400"
-                />
-                {orderSearchQuery && (
-                  <button onClick={() => setOrderSearchQuery('')} className="text-xs text-stone-400 hover:text-stone-600">✕</button>
-                )}
+              {/* Actions & Search */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <button
+                  type="button"
+                  onClick={fetchOrders}
+                  disabled={ordersLoading}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 hover:text-stone-900 rounded-2xl text-xs font-bold shadow-xs transition-all disabled:opacity-50"
+                  title="Click to refresh orders"
+                >
+                  <RefreshCw size={14} className={ordersLoading ? 'animate-spin text-[#8B5E34]' : 'text-[#8B5E34]'} />
+                  <span>{ordersLoading ? 'Refreshing...' : 'Refresh Orders'}</span>
+                </button>
+
+                {/* Order Search Bar */}
+                <div className="flex items-center bg-white border border-stone-200 rounded-2xl px-4 py-2.5 max-w-sm shadow-xs">
+                  <Search size={16} className="text-stone-400 mr-2 shrink-0" />
+                  <input
+                    type="text"
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    placeholder="Search by Order ID, Name, Phone..."
+                    className="w-full bg-transparent text-xs text-stone-800 outline-none placeholder:text-stone-400"
+                  />
+                  {orderSearchQuery && (
+                    <button onClick={() => setOrderSearchQuery('')} className="text-xs text-stone-400 hover:text-stone-600">✕</button>
+                  )}
+                </div>
               </div>
             </div>
 

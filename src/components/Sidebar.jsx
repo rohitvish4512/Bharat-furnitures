@@ -77,7 +77,7 @@ export default function Sidebar() {
     const name = (cat?.name || '').toLowerCase();
 
     if (id.includes('study') || name.includes('study') || name.includes('laptop')) {
-      return 'https://images.unsplash.com/photo-1595515106969-1ce29566ff1c?auto=format&fit=crop&w=120&q=80';
+      return '/study-table-category.jpg';
     }
     if (id.includes('chair') || name.includes('chair')) {
       return 'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=120&q=80';

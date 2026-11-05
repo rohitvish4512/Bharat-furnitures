@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -70,6 +70,15 @@ const getStepIndex = (status) => {
   }
 };
 
+const parseOrderTimestamp = (createdAt) => {
+  if (!createdAt) return 0;
+  if (typeof createdAt.toMillis === 'function') return createdAt.toMillis();
+  if (createdAt.seconds) return createdAt.seconds * 1000;
+  if (createdAt instanceof Date) return createdAt.getTime();
+  const parsed = Date.parse(createdAt);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 export default function MyOrders() {
   const { currentUser, openAuthModal } = useAuth();
   const navigate = useNavigate();
@@ -93,8 +102,8 @@ export default function MyOrders() {
         const orderList = snap.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
           .sort((a, b) => {
-            const timeA = a.createdAt?.seconds || 0;
-            const timeB = b.createdAt?.seconds || 0;
+            const timeA = parseOrderTimestamp(a.createdAt);
+            const timeB = parseOrderTimestamp(b.createdAt);
             return timeB - timeA;
           });
         setOrders(orderList);

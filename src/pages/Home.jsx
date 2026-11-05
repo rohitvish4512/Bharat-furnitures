@@ -4,7 +4,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Sidebar from '../components/Sidebar';
 import { categories as fallbackCategories } from '../data/products';
-import { ArrowRight, Sparkles, Tag, ShieldCheck, Flame } from 'lucide-react';
+import { ArrowRight, Sparkles, Tag, ShieldCheck, Flame, MapPin, Clock, Phone, Navigation, ArrowUpRight } from 'lucide-react';
 
 export default function Home() {
   const [categories, setCategories] = useState([]);
@@ -56,7 +56,7 @@ export default function Home() {
       return 'https://images.unsplash.com/photo-1580481077195-c3a82104536b?auto=format&fit=crop&w=700&q=80';
     }
     if (key.includes('study') || key.includes('laptop')) {
-      return 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=700&q=80';
+      return '/study-table-category.jpg';
     }
     if (key.includes('centre') || key.includes('coffee') || key.includes('table')) {
       return 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=700&q=80';
@@ -179,18 +179,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Trust Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-8 border-t border-b border-stone-200 my-8 text-center bg-stone-50 rounded-2xl p-4">
-          <div className="flex flex-col items-center">
-            <span className="text-2xl mb-1">🪵</span>
-            <span className="text-xs font-bold text-stone-900">100% Solid Wood</span>
-            <span className="text-[0.68rem] text-stone-500">Premium Sheesham</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl mb-1">🛡️</span>
-            <span className="text-xs font-bold text-stone-900">Lifetime Warranty</span>
-            <span className="text-[0.68rem] text-stone-500">Termite proof build</span>
-          </div>
+        {/* Trust Badges (Delivery & Payment) */}
+        <div className="grid grid-cols-2 gap-4 py-6 border-t border-b border-stone-200 my-8 text-center bg-stone-50 rounded-2xl p-4">
           <div className="flex flex-col items-center">
             <span className="text-2xl mb-1">🚚</span>
             <span className="text-xs font-bold text-stone-900">Free Delivery</span>
@@ -202,6 +192,84 @@ export default function Home() {
             <span className="text-[0.68rem] text-stone-500">Safe & secure checkout</span>
           </div>
         </div>
+
+
+        
+        {/* OFFLINE EXPERIENCE SHOWROOM CARD (INDORE) */}
+        <section className="my-10 sm:my-14">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FAF7F2] via-stone-50 to-amber-50/50 border border-stone-200/90 p-6 sm:p-8 md:p-10 shadow-sm">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 lg:gap-10">
+              
+              <div className="space-y-3.5 flex-1">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#8B5E34]/10 border border-[#8B5E34]/20 text-[#8B5E34] text-xs font-bold uppercase tracking-wider">
+                  <MapPin size={14} />
+                  <span>Visit Our Offline Experience Store In Indore</span>
+                </div>
+                
+                <h3 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-stone-900 leading-tight">
+                  Experience Furniture in Person
+                </h3>
+                
+                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-2xl">
+                  Prefer touching, feeling, and inspecting furniture before buying? Visit our official Indore showroom! Explore compact study desks, utility chairs, racks, and solid tables. Direct store pickup & doorstep delivery available.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                  <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs">
+                    <div className="w-9 h-9 rounded-xl bg-[#8B5E34]/10 text-[#8B5E34] flex items-center justify-center shrink-0 mt-0.5">
+                      <MapPin size={17} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[0.68rem] font-bold text-stone-400 uppercase tracking-wider block">Store Address</span>
+                      <p className="text-xs sm:text-sm font-bold text-stone-900 leading-snug mt-0.5">
+                        114, MIG Colony, Ambedkar Nagar, Indore, Madhya Pradesh 452011
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Clock size={17} />
+                    </div>
+                    <div>
+                      <span className="text-[0.68rem] font-bold text-stone-400 uppercase tracking-wider block">Store Timings</span>
+                      <p className="text-xs sm:text-sm font-bold text-stone-900 leading-snug mt-0.5">
+                        11:00 AM – 8:00 PM
+                      </p>
+                      <span className="text-[0.68rem] font-semibold text-emerald-700 block mt-0.5">
+                        Open All 7 Days (Mon - Sun)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0 pt-2 lg:pt-0">
+                <a
+                  href="https://maps.app.goo.gl/TBFTMMWHbgGQuT2L9"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3.5 rounded-2xl bg-[#8B5E34] hover:bg-[#5C3A21] text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                >
+                  <Navigation size={16} className="group-hover:rotate-45 transition-transform" />
+                  <span>Get Directions (Google Maps)</span>
+                  <ArrowUpRight size={14} className="text-amber-200" />
+                </a>
+
+                <a
+                  href="tel:+917067753335"
+                  className="px-6 py-3 rounded-2xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-xs sm:text-sm active:scale-95 transition-all flex items-center justify-center gap-2 shadow-2xs"
+                >
+                  <Phone size={15} className="text-[#8B5E34]" />
+                  <span>Call Store: +91 70677 53335</span>
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
 
         {/* Bottom Banner Section */}
         <div className="text-center mt-6 py-6">
