@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../config/firebase';
-import { collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { categories as fallbackCategories } from '../data/products';
 import { 
   Package, 
@@ -119,6 +119,19 @@ const Admin = () => {
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
+
+  // Category Management States
+  const [categoryFormData, setCategoryFormData] = useState({
+    id: '',
+    name: '',
+    description: '',
+    icon: '📦',
+    image: ''
+  });
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [categoryUploadLoading, setCategoryUploadLoading] = useState(false);
 
   // Admin Authentication Security State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
@@ -342,6 +355,150 @@ const Admin = () => {
       setMessage('Failed to update status: ' + err.message);
     } finally {
       setUpdatingOrderId(null);
+    }
+  };
+
+  // Category Management Handlers
+  const handleOpenAddCategory = () => {
+    setEditingCategoryId(null);
+    setCategoryFormData({
+      id: '',
+      name: '',
+      description: '',
+      icon: '🛋️',
+      image: ''
+    });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleOpenEditCategory = (cat) => {
+    setEditingCategoryId(cat.id);
+    setCategoryFormData({
+      id: cat.id,
+      name: cat.name || '',
+      description: cat.description || '',
+      icon: cat.icon || '📦',
+      image: cat.image || ''
+    });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCategoryImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCategoryUploadLoading(true);
+    try {
+      const cloudName = 'dy49nlqn';
+      const apiKey = '264425733737867';
+      const apiSecret = 'uoZKptVsW_8FHWJrpPZjqXscUaU';
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const signature = await generateSignature(timestamp, apiSecret);
+
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('api_key', apiKey);
+      formDataUpload.append('timestamp', timestamp);
+      formDataUpload.append('signature', signature);
+
+      const res = await fetch(cloudinaryUrl, {
+        method: 'POST',
+        body: formDataUpload
+      });
+
+      if (!res.ok) throw new Error('Image upload failed');
+      const data = await res.json();
+      setCategoryFormData(prev => ({ ...prev, image: data.secure_url }));
+      setMessage('Category image uploaded successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      console.error('Category image upload error:', err);
+      setMessage('Failed to upload image: ' + err.message);
+    } finally {
+      setCategoryUploadLoading(false);
+    }
+  };
+
+  const handleSaveCategory = async (e) => {
+    e.preventDefault();
+    if (!categoryFormData.name.trim()) {
+      setMessage('Please enter a category name');
+      return;
+    }
+
+    setCategorySaving(true);
+    try {
+      let targetId = editingCategoryId;
+      if (!targetId) {
+        targetId = (categoryFormData.id.trim() || categoryFormData.name.trim())
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+
+      if (!targetId) {
+        targetId = 'cat-' + Date.now();
+      }
+
+      // If categories collection in Firestore is empty, seed existing fallbackCategories first
+      // so default categories are preserved in Firestore and existing products never break
+      const existingSnap = await getDocs(collection(db, 'categories'));
+      if (existingSnap.empty) {
+        for (const fb of fallbackCategories) {
+          if (fb.id !== targetId) {
+            await setDoc(doc(db, 'categories', fb.id), {
+              ...fb,
+              createdAt: new Date().toISOString()
+            });
+          }
+        }
+      }
+
+      const catPayload = {
+        id: targetId,
+        name: categoryFormData.name.trim(),
+        description: categoryFormData.description.trim(),
+        icon: categoryFormData.icon.trim() || '📦',
+        image: categoryFormData.image.trim() || '',
+        updatedAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, 'categories', targetId), catPayload, { merge: true });
+
+      setMessage(editingCategoryId ? `Category "${catPayload.name}" updated successfully!` : `Category "${catPayload.name}" created successfully!`);
+      setTimeout(() => setMessage(''), 4000);
+      setIsCategoryModalOpen(false);
+      await fetchProductsAndCategories();
+    } catch (err) {
+      console.error('Error saving category:', err);
+      setMessage('Failed to save category: ' + err.message);
+    } finally {
+      setCategorySaving(false);
+    }
+  };
+
+  const handleDeleteCategory = async (cat) => {
+    // Safety check: Count how many products are linked to this category
+    const linkedCount = products.filter(p => p.categoryId === cat.id).length;
+    if (linkedCount > 0) {
+      alert(`⚠️ Cannot Delete Category "${cat.name}"!\n\nThere are currently ${linkedCount} product(s) linked to this category.\n\nPlease move or reassign these products to another category first to keep them safe.`);
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete category "${cat.name}"?`)) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'categories', cat.id));
+      setMessage(`Category "${cat.name}" deleted successfully.`);
+      setTimeout(() => setMessage(''), 4000);
+      await fetchProductsAndCategories();
+    } catch (err) {
+      console.error('Error deleting category:', err);
+      setMessage('Failed to delete category: ' + err.message);
     }
   };
 
@@ -874,6 +1031,29 @@ const Admin = () => {
               </span>
             )}
           </button>
+
+          {/* 4. Manage Categories Link */}
+          <button
+            onClick={() => {
+              setActiveTab('categories');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
+              activeTab === 'categories'
+                ? 'bg-[#8B5E34] text-white shadow-md shadow-[#8B5E34]/20'
+                : 'text-stone-700 hover:bg-stone-100 hover:text-stone-900'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Tag size={18} className={activeTab === 'categories' ? 'text-white' : 'text-[#8B5E34]'} />
+              <span>Manage Categories</span>
+            </div>
+            <span className={`text-[0.7rem] px-2 py-0.5 rounded-full font-extrabold ${
+              activeTab === 'categories' ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600'
+            }`}>
+              {allCategoryCards.length}
+            </span>
+          </button>
         </div>
 
         {/* Sidebar Footer */}
@@ -938,6 +1118,7 @@ const Admin = () => {
             <button onClick={() => setMessage('')} className="text-stone-400 hover:text-stone-700">✕</button>
           </div>
         )}
+
 
         {/* ============================================================== */}
         {/* SECTION 1: ADD / EDIT PRODUCT                                  */}
@@ -1453,6 +1634,7 @@ const Admin = () => {
           </div>
         )}
 
+
         {/* ============================================================== */}
         {/* SECTION 2: MANAGE PRODUCTS                                     */}
         {/* ============================================================== */}
@@ -1666,6 +1848,7 @@ const Admin = () => {
 
           </div>
         )}
+
 
         {/* ============================================================== */}
         {/* SECTION 3: ORDERS MANAGEMENT (DIVIDED BY STATUS)                */}
@@ -1897,11 +2080,331 @@ const Admin = () => {
           </div>
         )}
 
+        {/* ============================================================== */}
+        {/* SECTION 4: CATEGORY MANAGEMENT                                 */}
+        {/* ============================================================== */}
+        {activeTab === 'categories' && (
+          <div className="animate-fade-in space-y-6">
+            {/* Header & Add Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-bold text-[#8B5E34] uppercase tracking-wider">
+                  Store Structure
+                </span>
+                <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-stone-900 mt-0.5">
+                  Category Management
+                </h2>
+                <p className="text-xs text-stone-500 mt-1">
+                  Add new furniture categories, rename existing ones, or update category photos.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleOpenAddCategory}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#8B5E34] hover:bg-[#6F4420] text-white rounded-2xl text-xs font-bold shadow-md shadow-[#8B5E34]/20 transition-all cursor-pointer active:scale-95"
+                >
+                  <PlusCircle size={16} />
+                  <span>+ Add New Category</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Summary Banner */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-stone-200/80 shadow-xs flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#8B5E34] flex items-center justify-center font-bold text-lg">
+                  🏷️
+                </div>
+                <div>
+                  <span className="text-[0.68rem] uppercase font-bold text-stone-400 block">Total Categories</span>
+                  <span className="font-heading font-extrabold text-xl text-stone-900">{allCategoryCards.length}</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-stone-200/80 shadow-xs flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-lg">
+                  📦
+                </div>
+                <div>
+                  <span className="text-[0.68rem] uppercase font-bold text-stone-400 block">Total Products Linked</span>
+                  <span className="font-heading font-extrabold text-xl text-stone-900">{products.length}</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-stone-200/80 shadow-xs flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg">
+                  🛡️
+                </div>
+                <div>
+                  <span className="text-[0.68rem] uppercase font-bold text-stone-400 block">Existing Products Protection</span>
+                  <span className="font-heading font-bold text-xs text-emerald-600">Safe & 100% Intact</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Categories Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {allCategoryCards.map((cat) => {
+                const linkedCount = products.filter(p => p.categoryId === cat.id).length;
+                return (
+                  <div 
+                    key={cat.id} 
+                    className="bg-white rounded-3xl border border-stone-200/80 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Top Row: Icon/Image & Actions */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-14 h-14 rounded-2xl bg-[#F8F9FA] border border-stone-200/70 p-1 flex items-center justify-center overflow-hidden shrink-0">
+                            {cat.image ? (
+                              <img 
+                                src={cat.image} 
+                                alt={cat.name} 
+                                className="w-full h-full object-contain mix-blend-multiply" 
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            ) : (
+                              <span className="text-2xl">{cat.icon || '📦'}</span>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-heading font-extrabold text-base text-stone-900 leading-tight">
+                              {cat.name}
+                            </h3>
+                            <span className="inline-block text-[0.65rem] font-mono bg-stone-100 text-stone-600 px-2 py-0.5 rounded-md mt-1">
+                              ID: {cat.id}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-xs text-stone-500 line-clamp-2 mb-3 min-h-[32px]">
+                        {cat.description || 'No description provided.'}
+                      </p>
+
+                      {/* Product Count Badge */}
+                      <div className="flex items-center justify-between text-xs py-2 px-3 rounded-xl bg-stone-50 border border-stone-100 mb-4">
+                        <span className="text-stone-600 font-medium">Products in this Category:</span>
+                        <span className="font-extrabold text-[#8B5E34] bg-white px-2 py-0.5 rounded-full border border-stone-200">
+                          {linkedCount} Items
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 pt-3 border-t border-stone-100">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditCategory(cat)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-stone-100 hover:bg-[#8B5E34] text-stone-700 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        title="Rename or Edit Category"
+                      >
+                        <Edit3 size={13} />
+                        <span>Edit / Rename</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('manage');
+                          setSelectedCategoryForManage(cat.id);
+                        }}
+                        className="flex items-center justify-center py-2 px-3 bg-amber-50 hover:bg-amber-100 text-[#8B5E34] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        title="View Products in this Category"
+                      >
+                        <Boxes size={13} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCategory(cat)}
+                        className={`flex items-center justify-center py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          linkedCount > 0 
+                            ? 'bg-stone-100 text-stone-400 cursor-not-allowed hover:bg-stone-100' 
+                            : 'bg-rose-50 hover:bg-rose-100 text-rose-600'
+                        }`}
+                        title={linkedCount > 0 ? `Cannot delete: ${linkedCount} products linked` : 'Delete Category'}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       </main>
 
       {/* ============================================================== */}
       {/* ORDER DETAILS & ADDRESS MODAL                                   */}
       {/* ============================================================== */}
+      {/* ============================================================== */}
+      {/* MODAL: ADD / EDIT CATEGORY                                     */}
+      {/* ============================================================== */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[92vh]">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-4.5 border-b border-stone-100 flex items-center justify-between bg-stone-50/70">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#8B5E34] text-white flex items-center justify-center font-bold text-xs">
+                  <Tag size={16} />
+                </div>
+                <div>
+                  <h3 className="font-heading font-extrabold text-stone-900 text-base">
+                    {editingCategoryId ? 'Edit Category' : 'Add New Category'}
+                  </h3>
+                  <span className="text-[0.68rem] text-stone-500 font-medium">
+                    {editingCategoryId ? 'Rename or update details (Product links will remain 100% safe)' : 'Create a new category for your furniture catalog'}
+                  </span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-all cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body Form */}
+            <form onSubmit={handleSaveCategory} className="p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Category Name */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-xs text-stone-700 uppercase tracking-wide">
+                  Category Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Study & Office Desks, Solid Wood Beds, etc."
+                  value={categoryFormData.name}
+                  onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8B5E34] focus:bg-white transition-all font-medium"
+                />
+              </div>
+
+              {/* Category ID (Slug) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-xs text-stone-700 uppercase tracking-wide">
+                    Category ID (URL Slug)
+                  </label>
+                  {editingCategoryId && (
+                    <span className="text-[0.65rem] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-bold">
+                      🔒 Locked to protect existing products
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  disabled={!!editingCategoryId}
+                  placeholder={editingCategoryId || 'Auto-generated from name (e.g. study-office-desks)'}
+                  value={editingCategoryId ? editingCategoryId : categoryFormData.id}
+                  onChange={(e) => setCategoryFormData({ ...categoryFormData, id: e.target.value })}
+                  className={`w-full px-4 py-2.5 border rounded-xl text-xs font-mono transition-all ${
+                    editingCategoryId 
+                      ? 'bg-stone-100 text-stone-500 border-stone-200 cursor-not-allowed' 
+                      : 'bg-stone-50 text-stone-800 border-stone-200 focus:bg-white focus:border-[#8B5E34]'
+                  }`}
+                />
+                {!editingCategoryId && (
+                  <p className="text-[0.68rem] text-stone-400">
+                    Leave blank to auto-generate from the category name.
+                  </p>
+                )}
+              </div>
+
+              {/* Emoji Icon & Description */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="space-y-1.5 sm:col-span-1">
+                  <label className="font-bold text-xs text-stone-700 uppercase tracking-wide">
+                    Icon / Emoji
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={4}
+                    value={categoryFormData.icon}
+                    onChange={(e) => setCategoryFormData({ ...categoryFormData, icon: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-center text-lg text-stone-900 focus:outline-none focus:border-[#8B5E34] focus:bg-white"
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-3">
+                  <label className="font-bold text-xs text-stone-700 uppercase tracking-wide">
+                    Tagline / Description
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Space-saving desks for productive work"
+                    value={categoryFormData.description}
+                    onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:border-[#8B5E34] focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Category Image */}
+              <div className="space-y-2">
+                <label className="font-bold text-xs text-stone-700 uppercase tracking-wide">
+                  Category Photo / Image
+                </label>
+                <div className="flex items-center gap-3">
+                  {categoryFormData.image && (
+                    <div className="w-16 h-16 rounded-xl bg-stone-100 border border-stone-200 p-1 flex items-center justify-center shrink-0 overflow-hidden">
+                      <img src={categoryFormData.image} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Paste Image URL or upload below"
+                      value={categoryFormData.image}
+                      onChange={(e) => setCategoryFormData({ ...categoryFormData, image: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:border-[#8B5E34] focus:bg-white"
+                    />
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-bold cursor-pointer transition-all">
+                      <span>{categoryUploadLoading ? 'Uploading...' : '📁 Upload Photo from Device'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={categoryUploadLoading}
+                        onChange={handleCategoryImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-100">
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={categorySaving || categoryUploadLoading}
+                  className="px-6 py-2.5 rounded-xl bg-[#8B5E34] hover:bg-[#6F4420] text-white text-xs font-bold shadow-md shadow-[#8B5E34]/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  {categorySaving ? 'Saving...' : (editingCategoryId ? 'Update Category' : 'Create Category')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {selectedOrder && (
         <div 
           className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"

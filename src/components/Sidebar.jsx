@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { categories as fallbackCategories } from '../data/products';
 import { Search, X, ChevronDown, ChevronUp, Heart, Package } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 
@@ -29,10 +30,14 @@ export default function Sidebar() {
     const fetchCategories = async () => {
       try {
         const catSnap = await getDocs(collection(db, 'categories'));
-        const catData = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let catData = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (!catData || catData.length === 0) {
+          catData = fallbackCategories;
+        }
         setCategories(catData);
       } catch (error) {
         console.error("Error fetching categories in sidebar:", error);
+        setCategories(fallbackCategories);
       }
     };
     fetchCategories();

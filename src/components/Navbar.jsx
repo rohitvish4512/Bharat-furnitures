@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { categories as fallbackCategories } from '../data/products';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -75,10 +76,14 @@ export default function Navbar() {
     const fetchCats = async () => {
       try {
         const catSnap = await getDocs(collection(db, 'categories'));
-        const catData = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let catData = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (!catData || catData.length === 0) {
+          catData = fallbackCategories;
+        }
         setCategories(catData);
       } catch (error) {
         console.error("Error fetching categories in Navbar:", error);
+        setCategories(fallbackCategories);
       }
     };
     fetchCats();
