@@ -79,7 +79,7 @@ export default function Footer() {
           </h4>
           <div className="space-y-2 text-xs text-stone-400">
             <p className="font-semibold text-stone-200 leading-snug">
-              114, MIG Colony, Ambedkar Nagar, Indore, MP 452011
+              112, MIG Colony, Ambedkar Nagar, Indore, MP 452011
             </p>
             <p className="flex items-center gap-1.5 text-stone-400">
               <Clock size={13} className="text-[#D4A373] shrink-0" />
@@ -87,7 +87,7 @@ export default function Footer() {
             </p>
             <div className="pt-1.5">
               <a
-                href="https://maps.app.goo.gl/TBFTMMWHbgGQuT2L9"
+                href="https://www.google.com/maps/search/?api=1&query=112,+MIG+Colony,+Ambedkar+Nagar,+Indore,+Madhya+Pradesh+452011"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D4A373] hover:text-white transition-colors group"

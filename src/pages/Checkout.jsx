@@ -718,7 +718,7 @@ export default function Checkout() {
 
                 {totalSavings > 0 && (
                   <div className="flex justify-between text-emerald-700 font-bold">
-                    <span>Festive Discount</span>
+                    <span>Special Discount</span>
                     <span>-₹{totalSavings.toLocaleString('en-IN')}</span>
                   </div>
                 )}

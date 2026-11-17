@@ -42,7 +42,7 @@ export default function AuthModal() {
         return {
           icon: <Sparkles className="text-amber-500" size={22} />,
           title: 'Welcome to Bharat Furnitures!',
-          subtitle: 'Sign in to unlock exclusive festive discounts and save your favorite furniture.'
+          subtitle: 'Sign in to unlock exclusive discounts and save your favorite furniture.'
         };
       default:
         return {

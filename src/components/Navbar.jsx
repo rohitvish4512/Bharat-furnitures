@@ -193,7 +193,7 @@ export default function Navbar() {
             
             {/* Store Location Map Icon */}
             <a
-              href="https://maps.app.goo.gl/TBFTMMWHbgGQuT2L9"
+              href="https://www.google.com/maps/search/?api=1&query=112,+MIG+Colony,+Ambedkar+Nagar,+Indore,+Madhya+Pradesh+452011"
               target="_blank"
               rel="noopener noreferrer"
               className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#f4ece1]/80 hover:bg-[#ebdcc8] text-stone-700 hover:text-[#8B5E34] transition-all flex items-center justify-center shadow-xs active:scale-95"

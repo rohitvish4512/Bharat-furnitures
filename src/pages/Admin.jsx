@@ -2556,7 +2556,7 @@ const Admin = () => {
               </div>
               {selectedOrder.totalSavings > 0 && (
                 <div className="flex justify-between text-emerald-700 font-bold">
-                  <span>Festive Discount</span>
+                  <span>Special Discount</span>
                   <span>-₹{selectedOrder.totalSavings.toLocaleString('en-IN')}</span>
                 </div>
               )}

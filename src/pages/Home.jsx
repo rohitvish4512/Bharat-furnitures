@@ -92,13 +92,13 @@ export default function Home() {
             {/* Left Offer Text */}
             <div className="w-full md:w-3/5 text-stone-900 flex flex-col items-start text-left">
               <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-black/15 text-white text-[0.65rem] sm:text-xs font-bold uppercase tracking-wider mb-1.5 sm:mb-2.5 backdrop-blur-xs">
-                <Flame size={12} className="text-amber-200 fill-amber-200 animate-pulse sm:w-3.5 sm:h-3.5" />
-                <span>Special Festive Offer • Limited Period</span>
+                <Sparkles size={12} className="text-amber-200 fill-amber-200 sm:w-3.5 sm:h-3.5" />
+                <span>Special Store Offer • Limited Time Deals</span>
               </div>
 
               <div className="flex items-baseline gap-2 mb-0.5 sm:mb-1">
                 <span className="font-heading font-extrabold text-2xl sm:text-4xl md:text-5xl tracking-tight text-white drop-shadow-sm">
-                  Diwali
+                  Mega
                 </span>
                 <span className="font-heading font-light italic text-2xl sm:text-4xl md:text-5xl text-amber-100">
                   Sale
@@ -106,12 +106,12 @@ export default function Home() {
               </div>
 
               <p className="text-white/95 font-medium text-[0.72rem] sm:text-sm md:text-base max-w-md mb-2.5 sm:mb-6 line-clamp-2 sm:line-clamp-none">
-                Iss Tyohar, ghar ko kuch solid do. Premium Solid Wood Furniture with authentic craftsmanship.
+                Ghar ko do solid pehchan. Handcrafted solid wood furniture with direct factory prices & free doorstep delivery.
               </p>
 
               {/* Shop CTA Button inside banner */}
               <div className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-1.5 sm:py-3 rounded-full bg-stone-950 text-white hover:bg-black font-bold text-[0.75rem] sm:text-sm shadow-md transition-all duration-200 group-hover:scale-105 group-hover:bg-[#0010c7]">
-                <span>Shop Sale Now</span>
+                <span>Shop Offers Now</span>
                 <ArrowRight size={14} className="transition-transform group-hover:translate-x-1 sm:w-4 sm:h-4" />
               </div>
             </div>
@@ -129,7 +129,7 @@ export default function Home() {
               <div className="relative w-full max-w-[280px] sm:max-w-[340px] aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-white/20 backdrop-blur-xs p-1.5 border border-white/40">
                 <img
                   src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=700&q=80"
-                  alt="Solid Wood Bed Festive Sale"
+                  alt="Solid Wood Furniture Mega Sale"
                   className="w-full h-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
@@ -222,7 +222,7 @@ export default function Home() {
                     <div className="min-w-0">
                       <span className="text-[0.68rem] font-bold text-stone-400 uppercase tracking-wider block">Store Address</span>
                       <p className="text-xs sm:text-sm font-bold text-stone-900 leading-snug mt-0.5">
-                        114, MIG Colony, Ambedkar Nagar, Indore, Madhya Pradesh 452011
+                        112, MIG Colony, Ambedkar Nagar, Indore, Madhya Pradesh 452011
                       </p>
                     </div>
                   </div>
@@ -247,7 +247,7 @@ export default function Home() {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0 pt-2 lg:pt-0">
                 <a
-                  href="https://maps.app.goo.gl/TBFTMMWHbgGQuT2L9"
+                  href="https://www.google.com/maps/search/?api=1&query=112,+MIG+Colony,+Ambedkar+Nagar,+Indore,+Madhya+Pradesh+452011"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-3.5 rounded-2xl bg-[#8B5E34] hover:bg-[#5C3A21] text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 group cursor-pointer"

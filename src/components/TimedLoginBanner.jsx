@@ -72,7 +72,7 @@ export default function TimedLoginBanner() {
               Loving Bharat Furnitures?
             </h4>
             <p className="text-xs text-stone-300 mt-1 leading-relaxed">
-              Sign in now to save your favorites & unlock up to <span className="text-amber-400 font-bold">15% festive discount</span> on your order!
+              Sign in now to save your favorites & unlock up to <span className="text-amber-400 font-bold">15% special discount</span> on your order!
             </p>
 
             <div className="flex items-center gap-2.5 mt-3.5">
